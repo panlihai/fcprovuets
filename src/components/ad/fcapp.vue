@@ -65,8 +65,7 @@ export default {
   },
   props: {
     model: {
-      type: Object,
-      default: () => {}
+      type: Object
     },
     methods: {
       type: Object,
@@ -100,12 +99,6 @@ export default {
     } else {
       console.error('请编写查询方法')
     }
-  },
-  computed: {},
-  watch: {
-    model () {
-    },
-    value () {}
   },
   methods: {
     // 公共方法
@@ -392,7 +385,8 @@ export default {
     /**
      * 列表行点击事件处理
      */
-    tableRowClick () {
+    tableRowClick (param) {
+      console.log(param)
     },
     /**
      * 双击行时，默认选中的对象修改为当前行，并打开浏览窗口
@@ -404,12 +398,14 @@ export default {
     /**
      * 列表单元格点击事件处理
      */
-    tableCellClick () {
+    tableCellClick (param) {
+      console.log(param)
     },
     /**
      * 列表单元格双击事件处理
      */
-    tableCellDblClick () {
+    tableCellDblClick (param) {
+      console.log(param)
     },
     /**
      * 打开链接，暂时支持查看当前明细
@@ -464,18 +460,16 @@ export default {
 }
 </script>
 
-<style lang="scss">
+<style lang="css">
 .ysapp {
   display: flex;
   flex-direction: column;
-  .search {
-  }
-  .table {
-    flex: 1;
-  }
-  .toolbar{
-    display: flex;
-    justify-content: flex-start;
-  }
+}
+.table {
+  flex: 1;
+}
+.toolbar{
+  display: flex;
+  justify-content: flex-start;
 }
 </style>

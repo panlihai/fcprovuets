@@ -19,7 +19,7 @@
               :label="field.fieldName"
               :prop="field.fieldCode"
               :class="field.inputType"
-              @click.native="labelClick(field)"
+              @click="labelClick(field)"
               :required="field.isrequired === true"
               class="form-field"
             >
@@ -36,13 +36,26 @@
                 </el-tooltip>
                 <label v-text="field.fieldName" />
               </template>
+              <!-- 提示 -->
+              <template v-slot:label v-else-if="field.inputType === 'check'">
+                <el-tooltip
+                  class="field"
+                  effect="dark"
+                  :content="field.description"
+                  placement="left"
+                  v-if="field.description"
+                >
+                  <i class="el-icon-info"></i>
+                </el-tooltip>
+                <label v-text="field.fieldName" />
+              </template>
               <!-- 数值 -->
               <el-input-number
                 :clearable="true"
                 v-if="field.inputType === 'long'"
                 v-model="mainObj[field.fieldCode]"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 :disabled="field.readonly||false"
                 :readonly="field.readonly||false"
@@ -57,8 +70,8 @@
                 :disabled="field.readonly||false"
                 :readonly="field.readonly||false"
                 v-model="mainObj[field.fieldCode]"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
                 @change="valueChange(field, $event)"
@@ -71,8 +84,8 @@
                 align="right"
                 type="date"
                 :readonly="field.readonly||false"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
                 @change="valueChange(field, $event)"
@@ -86,8 +99,8 @@
                 type="datetime"
                 align="right"
                 :readonly="field.readonly||false"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
                 @change="valueChange(field, $event)"
@@ -100,8 +113,8 @@
                 v-model="mainObj[field.fieldCode]"
                 align="right"
                 type="date"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 :readonly="field.readonly||false"
                 @focus="fieldFocus(field)"
@@ -114,8 +127,8 @@
                 :clearable="true"
                 v-else-if="field.inputType === 'text'"
                 v-model="mainObj[field.fieldCode]"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 :readonly="field.readonly||false"
                 @focus="fieldFocus(field)"
@@ -128,8 +141,8 @@
                 v-else-if="field.inputType === 'textarea'"
                 rows="2"
                 :readonly="field.readonly||false"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
                 v-model="mainObj[field.fieldCode]"
@@ -144,8 +157,8 @@
                 v-model="mainObj[field.fieldCode]"
                 :disabled="field.readonly||false"
                 readonly
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
                 @change="valueChange(field, $event)"
@@ -159,8 +172,8 @@
                 v-model="mainObj[field.fieldCode]"
                 :disabled="field.readonly||false"
                 readonly
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
                 @change="valueChange(field, $event)"
@@ -213,19 +226,6 @@
                 </template>
               </el-checkbox-group>
               <label v-text="mainObj[field.fieldCode]" v-else-if="field.inputType === 'label'" />
-              <!-- 提示 -->
-              <template v-slot:label v-if="field.inputType === 'check'">
-                <el-tooltip
-                  class="field"
-                  effect="dark"
-                  :content="field.description"
-                  placement="left"
-                  v-if="field.description"
-                >
-                  <i class="el-icon-info"></i>
-                </el-tooltip>
-                <label v-text="field.fieldName" />
-              </template>
             </el-form-item>
           </el-col>
         </el-row>
@@ -263,12 +263,10 @@ export default {
       default: () => []
     },
     value: {
-      type: Object,
-      default: () => {}
+      type: Object
     },
     rules: {
-      type: Object,
-      default: () => {}
+      type: Object
     }
   },
   data () {
@@ -302,13 +300,6 @@ export default {
   watch: {
     value () {
       this.mainObj = { ...this.value }
-    },
-    readonlyfields () {
-
-    },
-    hiddenfields () {
-    },
-    requiredfields () {
     }
   },
   methods: {
@@ -316,7 +307,9 @@ export default {
     dialogClose () {
       this.dialogVisible = !this.dialogVisible
     },
-    openDialog () {},
+    openDialog () {
+      this.dialogVisible = true
+    },
     // 弹窗后的数据选择
     dialogSelectionChange (event) {
       this.selectObjs = event.value

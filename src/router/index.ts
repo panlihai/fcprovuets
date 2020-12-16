@@ -17,6 +17,11 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import(/* webpackChunkName: "home" */ '../views/Home.vue')
       },
       {
+        path: '/listinfo',
+        name: 'listinfo',
+        component: () => import(/* webpackChunkName: "listionfo" */ '../components/ad/fcapp.vue')
+      },
+      {
         path: '/cardList',
         name: 'cardList',
         component: () => import(/* webpackChunkName: "cardList" */ '../views/CardList.vue')
@@ -51,9 +56,7 @@ router.beforeEach((to, from, next) => {
     next()
   } else {
     // 是否在登录状态下
-    console.log(store)
     const state: any = store.state
-    console.log(state.system)
     if (state.system.isLogin) {
       next()
     } else {

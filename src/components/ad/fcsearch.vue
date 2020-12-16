@@ -17,15 +17,20 @@
       <el-row v-for="(row, index) of vm.searchInfo.infoRow" :key="index">
         <template
           v-if="
-            (index === 0 && vm.searchInfo.viewRowSize === 1) || vm.searchInfo.viewRowSize !== 1
+            (index === 0 && vm.searchInfo.viewRowSize === 1) ||
+            vm.searchInfo.viewRowSize !== 1
           "
         >
-          <el-col v-for="(field, index0) of row" :span="field.span" :key="index0">
+          <el-col
+            v-for="(field, index0) of row"
+            :span="field.span"
+            :key="index0"
+          >
             <el-form-item
               :label="field.fieldName"
               :prop="field.fieldCode"
               :class="field.inputType"
-              @click.native="labelClick(field)"
+              @click="labelClick(field)"
               class="search-form-item"
             >
               <!-- 提示 -->
@@ -41,12 +46,23 @@
                 </el-tooltip>
                 <label v-text="field.fieldName" />
               </template>
+              <!-- 提示 -->
+              <template v-else-if="field.inputType === 'check'" v-slot:label>
+                <el-tooltip
+                  class="field"
+                  effect="dark"
+                  :content="field.description"
+                  placement="left"
+                >
+                  <i class="el-icon-info"></i>
+                </el-tooltip>
+              </template>
               <!-- 文本框 -->
               <el-input
                 :clearable="true"
                 v-if="field.inputType === 'text'"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
                 @change="valueChange(field, $event)"
@@ -58,8 +74,8 @@
                 v-if="field.inputType === 'table'"
                 prefix-icon="el-icon-search"
                 v-model="mainObj[field.fieldCode]"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @change="valueChange(field, $event)"
                 @focus="fieldFocus(field)"
@@ -86,8 +102,8 @@
               <el-checkbox
                 :clearable="true"
                 v-else-if="field.inputType === 'check'"
-                @click.native="fieldClick(field)"
-                @dblclick.native="fieldDblclick(field)"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
                 @change="valueChange(field, $event)"
                 v-model="mainObj[field.fieldCode]"
               ></el-checkbox>
@@ -103,38 +119,32 @@
                     v-for="opt of vm.select[field.dicCode]"
                     :key="opt.value"
                     :label="opt.value"
-                    @click.native="fieldClick(field)"
-                    @dblclick.native="fieldDblclick(field)"
+                    @click="fieldClick(field)"
+                    @dblclick="fieldDblclick(field)"
                     >{{ opt.label }}</el-checkbox
                   >
                 </template>
               </el-checkbox-group>
-              <!-- 提示 -->
-              <template v-slot:label v-if="field.inputType === 'check'">
-                <el-tooltip
-                  class="field"
-                  effect="dark"
-                  :content="field.description"
-                  placement="left"
-                  v-if="field.description"
-                >
-                  <i class="el-icon-info"></i>
-                </el-tooltip>
-                <label v-text="field.fieldName" />
-              </template>
+              <label v-text="field.fieldName" />
               <div v-if="field.inputType === 'searchBtn'">
                 <i
                   class="el-icon-arrow-left extend"
-                  @click="searchShow(true)" title="点击展开"
+                  @click="searchShow(true)"
+                  title="点击展开"
                   v-if="vm.searchInfo.viewRowSize === 1"
                 ></i>
-                <i class="el-icon-arrow-up extend" @click="searchShow()" v-if="vm.searchInfo.viewRowSize !== 1"  title="点击收起"></i>
+                <i
+                  class="el-icon-arrow-up extend"
+                  @click="searchShow()"
+                  v-if="vm.searchInfo.viewRowSize !== 1"
+                  title="点击收起"
+                ></i>
                 <el-button
                   type="primary"
-                  @click.native="search"
+                  @click="search"
                   icon="el-icon-search"
                   >{{ $t("查询") }}</el-button
-                ><el-button @click.native="reset" icon="el-icon-refresh">{{
+                ><el-button @click="reset" icon="el-icon-refresh">{{
                   $t("重置")
                 }}</el-button>
               </div>
@@ -154,11 +164,11 @@ export default {
   props: {
     model: {
       type: Object,
-      default: () => {}
+      default: () => null
     },
     value: {
       type: Object,
-      default: () => {}
+      default: () => null
     }
   },
   data () {
@@ -168,19 +178,9 @@ export default {
     }
   },
   created () {
-    this.vm.initSearchModel(
-      this.vm.searchInfo,
-      this.vm.fields,
-      false
-    )
+    this.vm.initSearchModel(this.vm.searchInfo, this.vm.fields, false)
   },
-  computed: {
-  },
-  watch: {
-    model () {
-    },
-    value () {}
-  },
+  computed: {},
   methods: {
     valueChange (field, value) {
       const change = {}
@@ -199,7 +199,10 @@ export default {
         this.vm.fields,
         this.vm.searchInfo.viewRowSize !== 1
       )
-      this.event('toolbar', { eventname: 'showmore', isshow: this.vm.searchInfo.viewRowSize })
+      this.event('toolbar', {
+        eventname: 'showmore',
+        isshow: this.vm.searchInfo.viewRowSize
+      })
     },
     /**
      * 点击标题处理

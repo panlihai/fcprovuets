@@ -18,7 +18,7 @@
         </template>
         <template v-for="cmenu of menu.P_CHILDMENUS" :key="cmenu.MENUID"
           :index="cmenu.MENUID">
-          <el-menu-item :index="cmenu.MENUID" v-if="cmenu.MENUTYPE!=='MENU'">
+          <el-menu-item :index="cmenu.MENUID" v-if="cmenu.MENUTYPE!=='MENU'" @click="navigate(cmenu)">
             <i class="el-icon-location"></i>
             <template #title>{{ cmenu.MENUNAME }}</template>
           </el-menu-item>
@@ -39,10 +39,10 @@
                     :index="cccmenu.MENUID"
                   >
                     <template #title v-if="cccmenu.MENUTYPE==='MENU'">{{ cccmenu.MENUNAME }}</template>
-                    <el-menu-item  v-if="cccmenu.MENUTYPE!=='MENU'">{{ cccmenu.MENUNAME }}</el-menu-item>
+                    <el-menu-item  @click="navigate(cccmenu)" v-if="cccmenu.MENUTYPE!=='MENU'">{{ cccmenu.MENUNAME }}</el-menu-item>
                   </el-submenu>
                 </template>
-                <el-menu-item :index="ccmenu.MENUID" v-if="ccmenu.MENUTYPE!=='MENU'">
+                <el-menu-item :index="ccmenu.MENUID"  @click="navigate(ccmenu)" v-if="ccmenu.MENUTYPE!=='MENU'">
                   <i class="el-icon-location"></i>
                   <template #title>{{ ccmenu.MENUNAME }}</template>
                 </el-menu-item>
@@ -51,7 +51,7 @@
           </el-submenu>
         </template>
       </el-submenu>
-      <el-menu-item :index="menu.MENUID" v-else>
+      <el-menu-item :index="menu.MENUID" v-else  @click="navigate(menu)">
         <i class="el-icon-location"></i>
         <template #title>{{ menu.MENUNAME }}</template>
       </el-menu-item>
@@ -75,6 +75,11 @@ export default defineComponent({
     ...mapState('system', {
       value: (state: any) => state.sysmenus
     })
+  },
+  methods: {
+    navigate (menu: any) {
+      this.$router.push({ path: '/listinfo', params: menu })
+    }
   }
 })
 </script>

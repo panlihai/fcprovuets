@@ -65,7 +65,7 @@
             :size="vm.tableInfo.size"
             type="text"
             :disabled="!!(vm.tableInfo.editDisabled && vm.tableInfo.editDisabled(row))"
-            @click.native.stop="toolbar(row, $index, column, btn)">
+            @click.stop="toolbar(row, $index, column, btn)">
             {{$t(btn.btnName)}}
           </el-button>
         </template>
@@ -92,6 +92,7 @@ export default {
   props: {
     model: {
       type: Object,
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       default: () => {}
     },
     value: {
@@ -118,12 +119,6 @@ export default {
     this.vm.initTableModel(this.vm.tableInfo, this.vm.fields, true, false)
   },
   computed: { },
-  watch: {
-    model () {
-    },
-    value () {
-    }
-  },
   methods: {
     toolbar (value, $index, column, btn) {
       this.event('toolbar', {

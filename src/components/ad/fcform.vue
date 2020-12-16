@@ -500,12 +500,10 @@ export default {
   },
   props: {
     model: {
-      type: Object,
-      default: () => {}
+      type: Object
     },
     value: {
-      type: Object,
-      default: () => {}
+      type: Object
     }
   },
   data () {
