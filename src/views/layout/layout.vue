@@ -1,11 +1,13 @@
 <template>
   <el-container>
-    <el-header style="padding:0px">
+    <el-header style="padding: 0px">
       <fcheader></fcheader>
     </el-header>
     <el-container>
       <el-aside width="200px"><fcmenu></fcmenu></el-aside>
-      <el-main><router-view></router-view></el-main>
+      <el-main>
+        <keep-alive><router-view></router-view></keep-alive>
+      </el-main>
     </el-container>
   </el-container>
 </template>
@@ -22,7 +24,14 @@ export default defineComponent({
     fcmenu
   },
   data: () => {
-    return {}
+    return {
+      tabs: [{
+        title: '首页',
+        name: '1',
+        content: 'Tab 1 content'
+      }],
+      tabIndex: 2
+    }
   },
   setup: () => {
     return {}

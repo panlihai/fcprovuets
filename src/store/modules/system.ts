@@ -1,14 +1,21 @@
 import * as UserService from '../../api/user'
 import Model from '@/api/model'
 // initial state
-const state = () => ({
-  sysproducts: [],
-  sysmenus: [],
-  isLogin: false,
-  sysuser: {},
-  token: '',
-  pid: 'BACKING'
-})
+const state = () => {
+  let state = localStorage.getItem('state')
+  if (state === undefined || state === null) {
+    state = JSON.stringify({
+      sysproducts: [],
+      sysmenus: [],
+      isLogin: false,
+      sysuser: {},
+      token: '',
+      pid: 'BACKING'
+    })
+    localStorage.setItem('state', JSON.stringify(state))
+  }
+  return JSON.parse(state)
+}
 
 // getters
 const getters = {
@@ -69,24 +76,33 @@ const actions = {
 const mutations = {
   sysproducts (state: any, p: any) {
     state.sysproducts = p
+    localStorage.setItem('state', JSON.stringify(state))
     console.log(state)
   },
   sysmenus (state: any, menus: any[]) {
     state.sysmenus = menus
+    localStorage.setItem('state', JSON.stringify(state))
     console.log(state)
   },
   sysuser (state: any, sysuser: any) {
     state.isLogin = true
     state.sysuser = sysuser
+    localStorage.setItem('state', JSON.stringify(state))
     console.log(state)
   },
   token (state: any, token: string) {
     state.token = token
+    localStorage.setItem('state', JSON.stringify(state))
     console.log(state)
   },
   pid (state: any, pid: string) {
     state.pid = pid
+    localStorage.setItem('state', JSON.stringify(state))
     console.log(state)
+  },
+  system (state: any, s: any) {
+    state = s
+    localStorage.setItem('state', JSON.stringify(state))
   }
 }
 
