@@ -57,6 +57,7 @@ export default defineComponent({
       console.log(result)
       if (result.length !== 0) {
         this.getMenus(result[0].PID)
+        // this.getModels(result[0].PID)
       }
     })
   },
@@ -64,6 +65,9 @@ export default defineComponent({
     getMenus (pid: string) {
       store.dispatch('system/getMenus', pid)
     }
+    // getModels (pid: string) {
+    //   store.dispatch('model/initapp', { AID: '*', PID: pid })
+    // }
   }
 })
 </script>

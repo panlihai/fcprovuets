@@ -7,25 +7,25 @@
  -->
 <template>
   <div class="fcform">
-    <template v-if="vm.formInfo.childViewType === 'list'">
+    <template v-if="model.childViewType === 'list'">
       <div class="formContent">
-        <div
-          class="form"
-          v-for="(grp, index) of vm.formInfo.fldGroup"
-          :key="index"
-        >
-          <div class="grpTitle" :style="{backgroundColor:index!==0?'#e8e3e3':'#fff'}">
-            <div :class="{'title':index!==0}">{{index!==0?grp.fldGroupName:''}}</div>
+        <div class="form">
+          <div
+            class="grpTitle"
+            :style="{ backgroundColor: '#fff' }"
+          >
             <div class="analysis">
-              <div v-if="index===0" style="font-size:16px">{{ grp.fldGroupName }}</div>
-              <div v-if="grp.counteFields && grp.counteFields.length !== 0">
+              <div style="font-size: 16px">
+                {{ model.title }}
+              </div>
+              <div v-if="model.counteFields && model.counteFields.length !== 0">
                 <span
                   class="analysisItem"
-                  v-for="(anal, indexAnal) of grp.counteFields"
+                  v-for="(anal, indexAnal) of model.counteFields"
                   :key="indexAnal"
                 >
-                  <template v-if="vm.fields[anal]">
-                    {{ vm.fields[anal].fieldName }}合计：{{
+                  <template v-if="model.fields[anal]">
+                    {{ model.fields[anal].fieldName }}合计：{{
                       mainObj[anal] || 0
                     }};
                   </template>
@@ -35,75 +35,72 @@
             <div class="open">
               <div
                 class="toolbar"
-                v-if="!grp.toolbarView || grp.toolbarView === 'title'"
+                v-if="!model.toolbarView || model.toolbarView === 'topRight'"
               >
                 <span
                   class="btn"
-                  v-for="(btn, btnIndex) of grp.toolbar"
+                  v-for="(btn, btnIndex) of model.toolbar"
                   :key="btnIndex"
                   size="mini"
-                  @click="groupToolbar(grp, btn)"
+                  @click="groupToolbar(model, btn)"
                   >{{ $t(btn.btnName) }}</span
                 >
               </div>
               <i
                 class="el-icon-arrow-left"
-                @click="showLine(grp)"
-                v-if="grp.fldGroupOpen === false"
+                @click="showLine(model)"
+                v-if="model.fldGroupOpen === false"
               ></i>
-              <i class="el-icon-arrow-down" @click="showLine(grp)" v-else></i>
+              <i class="el-icon-arrow-down" @click="showLine(model)" v-else></i>
             </div>
           </div>
-          <div class="grpContent" :hidden="grp.fldGroupOpen === false">
-            <fcbaseform v-if="index===0" :model="vm" :value="mainObj"
-            :inforow="grp.infoRow" :rules="grp.ruleInfo" :name="grp.gldGroupCode"
-                @click="fieldClick(grp, mainObj, $event)"
-                @dblclick="fieldDblclick(grp, mainObj, $event)"
-                @blur="fieldBlur(grp, mainObj, $event)"
-                @focus="fieldFocus(grp, mainObj, $event)"
-                @change="fieldValueChange(grp, mainObj, $event)">
-                <template #baseform>
-                  <slot name="baseform"></slot>
-                </template>
+          <div class="grpContent" :hidden="model.fldGroupOpen === false">
+            <fcbaseform
+              :value="mainObj"
+              :inforow="model.infoRow"
+              :rules="model.ruleInfo"
+              :name="model.gldGroupCode"
+              @labelclick="fieldLabelClick(model, mainObj, $event)"
+              @click="fieldClick(model, mainObj, $event)"
+              @dblclick="fieldDblclick(model, mainObj, $event)"
+              @blur="fieldBlur(model, mainObj, $event)"
+              @focus="fieldFocus(model, mainObj, $event)"
+              @change="fieldValueChange(model, mainObj, $event)"
+            >
+              <template #baseform>
+                <slot name="baseform"></slot>
+              </template>
             </fcbaseform>
-            <template v-if="index!==0">
-              <fcbaseform v-for="(data,cindex) of grp.data" :key="cindex" :model="vm" :value="data"
-                :inforow="grp.infoRow" :rules="grp.ruleInfo" :name="grp.gldGroupCode"
-                @click="fieldClick(grp, data, $event)"
-                @dblclick="fieldDblclick(grp, data, $event)"
-                @blur="fieldBlur(grp, data, $event)"
-                @focus="fieldFocus(grp, data, $event)"
-                @change="fieldValueChange(grp, data, $event)">
-                <template #baseform>
-                  <slot name="baseform"></slot>
-                </template>
-              </fcbaseform>
-            </template>
           </div>
-          <div class="grpFooter" v-if="grp.fldGroupOpen">
-            <div v-if="grp.toolbarView === 'blank'">
-              <fctoolbar @click="groupToolbar(grp, $event.btn)" :toolbar="grp.toolbar"></fctoolbar>
+          <div class="grpFooter" v-if="model.fldGroupOpen===true">
+            <div v-if="model.toolbarView === 'bottomRight'">
+              <fctoolbar
+                @click="groupToolbar(model, $event.btn)"
+                :toolbar="model.lineToolbar"
+              ></fctoolbar>
             </div>
           </div>
-          <div class="formContent" v-if="grp.children">
+          <div class="formContent" v-if="model.children">
             <div
               class="form"
-              v-for="(cgrp, childIndex) of grp.children"
+              v-for="(cmodel, childIndex) of model.children"
               :key="childIndex"
             >
               <div class="grpTitle">
-                <div class="title">{{ grp.fldGroupName }}{{ cgrp.fldGroupName }}</div>
+                <div class="title">
+                  {{ cmodel.title }}
+                </div>
                 <div class="analysis">
                   <div
-                    v-if="cgrp.counteFields && cgrp.counteFields.length !== 0"
+                    v-if="cmodel.counteFields && cmodel.counteFields.length !== 0"
                   >
                     <span
                       class="analysisItem"
-                      v-for="(canal, cindexAnal) of cgrp.counteFields"
+                      v-for="(canal, cindexAnal) of cmodel.counteFields"
                       :key="cindexAnal"
                     >
-                      <template v-if="vm.fields[canal]">
-                        {{ vm.fields[canal].fieldName }}合计：{{
+                      <template v-if="cmodel.fields[canal]">
+                        {{ cmodel.fields[canal].fieldName }}合计：{{
                           mainObj[anal] || 0
                         }};
                       </template>
@@ -113,113 +110,317 @@
                 <div class="open">
                   <div
                     class="toolbar"
-                    v-if="!cgrp.toolbarView || cgrp.toolbarView === 'title'"
+                    v-if="!cmodel.toolbarView || cmodel.toolbarView === 'topRight'"
                   >
                     <span
                       class="btn"
-                      v-for="(cbtn, cbtnIndex) of cgrp.toolbar"
+                      v-for="(cbtn, cbtnIndex) of cmodel.toolbar"
                       :key="cbtnIndex"
                       size="mini"
-                      @click="groupToolbar(cgrp, cbtn)"
+                      @click="groupToolbar(cmodel, cbtn)"
                       >{{ $t(cbtn.btnName) }}</span
                     >
                   </div>
                   <i
                     class="el-icon-arrow-left"
-                    @click="showLine(cgrp)"
-                    v-if="cgrp.fldGroupOpen === false"
+                    @click="showLine(cmodel)"
+                    v-if="cmodel.fldGroupOpen === false"
                   ></i>
                   <i
                     class="el-icon-arrow-down"
-                    @click="showLine(cgrp)"
+                    @click="showLine(cmodel)"
                     v-else
                   ></i>
                 </div>
               </div>
-              <div class="grpContent" :hidden="cgrp.fldGroupOpen === false">
-                <fcbaseform  v-for="(data,index) of cgrp.data" :key="index"
-                  :model="vm" :value="data" :inforow="cgrp.infoRow" :rules="cgrp.ruleInfo" :name="cgrp.gldGroupCode"
-                  @click="fieldClick(cgrp, data, $event)"
-                  @dblclick="fieldDblclick(cgrp, data, $event)"
-                  @blur="fieldBlur(cgrp, data, $event)"
-                  @focus="fieldFocus(cgrp, data, $event)"
-                  @change="fieldValueChange(cgrp, data, $event)">
-                  <template #baseform>
-                    <slot name="baseform"></slot>
+              <div class="grpContent" :hidden="cmodel.fldGroupOpen === false">
+                <template
+                  v-if="
+                    cmodel.viewType === 'form' ||
+                    (cmodel.viewType === 'links' && cmodel.editType === 'listFormEdit')
+                  "
+                >
+                  <fcbaseform
+                    v-for="(data, cindex) of cmodel.data"
+                    :key="cindex"
+                    :value="data"
+                    :inforow="cmodel.infoRow"
+                    :rules="cmodel.ruleInfo"
+                    :name="cmodel.gldGroupCode"
+                    @labelclick="fieldLabelClick(cmodel, mainObj, $event)"
+                    @click="fieldClick(cmodel, data, $event)"
+                    @dblclick="fieldDblclick(cmodel, data, $event)"
+                    @blur="fieldBlur(cmodel, data, $event)"
+                    @focus="fieldFocus(cmodel, data, $event)"
+                    @change="fieldValueChange(cmodel, data, $event)"
+                  >
+                    <template #baseform>
+                      <slot name="baseform"></slot>
+                    </template>
+                  </fcbaseform>
+                </template>
+                <template v-else-if="cmodel.viewType === 'links'">
+                  <template v-if="cmodel.editType === 'listEdit'">
+                    <fctable
+                      :tableInfo="cmodel"
+                      :height="200"
+                      :isloading="isLoading"
+                      :value="cmodel.data"
+                      @toolbar="tableToolbar(cmodel, $event)"
+                      @cellclick="tableCellClick(cmodel, $event)"
+                      @celldblclick="tableCellDblClick(cmodel, $event)"
+                      @rowclick="tableRowClick(cmodel, $event)"
+                      @rowdblclick="tableRowDblClick(cmodel, $event)"
+                      @sortchange="tableSortChange(cmodel, $event)"
+                      @headerclick="tableHeaderClick(cmodel, $event)"
+                      @rowcontextmenu="tableRowContextmenu(cmodel, $event)"
+                      @headercontextmenu="tableHeaderContextmenu(cmodel, $event)"
+                      @selectionchange="tableSelectionChange(cmodel, $event)"
+                      @selectall="tableSelectAll(cmodel, $event)"
+                      @select="tableSelectOne(cmodel, $event)"
+                      @pagechange="tablePageChange(cmodel, $event)"
+                      @linkclick="tableLinkClick(cmodel, $event)"
+                      @click="tableFieldClick(cmodel, cmodel.data, $event)"
+                      @dblclick="tableFieldDblclick(cmodel, cmodel.data, $event)"
+                      @blur="tableFieldBlur(cmodel, cmodel.data, $event)"
+                      @focus="tableFieldFocus(cmodel, cmodel.data, $event)"
+                      @change="tableFieldValueChange(cmodel, cmodel.data, $event)"
+                    ></fctable>
                   </template>
-                </fcbaseform>
+                  <template v-else-if="cmodel.editType === 'dialogEdit'">
+                    <el-dialog
+                      :title="cmodel.title"
+                      :visible="cmodel.formShow === true"
+                      width="70%"
+                      v-dialogDrag
+                      :before-close="formClose"
+                      append-to-body
+                    >
+                      <fcbaseform
+                        v-for="(data, cindex) of cmodel.data"
+                        :key="cindex"
+                        :value="data"
+                        :inforow="cmodel.infoRow"
+                        :rules="cmodel.ruleInfo"
+                        :name="cmodel.gldGroupCode"
+                        @labelclick="fieldLabelClick(cmodel, mainObj, $event)"
+                        @click="fieldClick(cmodel, data, $event)"
+                        @dblclick="fieldDblclick(cmodel, data, $event)"
+                        @blur="fieldBlur(cmodel, data, $event)"
+                        @focus="fieldFocus(cmodel, data, $event)"
+                        @change="fieldValueChange(cmodel, data, $event)"
+                      >
+                        <template #baseform>
+                          <slot name="baseform"></slot>
+                        </template>
+                      </fcbaseform>
+                    </el-dialog>
+                  </template>
+                </template>
               </div>
-              <div class="grpFooter" v-if="cgrp.fldGroupOpen">
-                <div v-if="cgrp.toolbarView === 'blank'">
-                  <fctoolbar @click="groupToolbar(cgrp, $event.btn)" :toolbar="cgrp.toolbar"></fctoolbar>
+              <div class="grpFooter" v-if="cmodel.toolbarView">
+                <div v-if="cmodel.toolbarView === 'bottomRight'">
+                  <fctoolbar
+                    @click="groupToolbar(cmodel, $event.btn)"
+                    :toolbar="cmodel.linetoolbar"
+                  ></fctoolbar>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="footer" v-if="vm.formInfo.toolbar">
-        <fctoolbar @click="formToolbar($event.btn)" :toolbar="vm.formInfo.toolbar"></fctoolbar>
-      </div>
+      <!-- <div class="footer" v-if="model.fldGroupOpen">
+        <fctoolbar
+          @click="formToolbar($event.btn)"
+          :toolbar="model.toolbar"
+        ></fctoolbar>
+      </div> -->
     </template>
-    <template v-else-if="vm.formInfo.childViewType === 'tab'">
-      <el-tabs :value="vm.formInfo.fldGroup[0].fldGroupCode">
+    <template v-else-if="model.childViewType === 'tab'">
+      <el-tabs :value="model.fldGroupCode">
         <el-tab-pane
-          v-for="(grp, index) of vm.formInfo.fldGroup"
-          :key="index"
-          :label="grp.fldGroupName"
-          name="baseform"
+          :label="model.title"
+          :name="model.fldGroupCode"
+        >
+          <div class="form">
+            <div class="grpToolbar" v-if="model.lineToolbar && model.lineToolbar.length !== 0">
+              <fctoolbar
+                @click="formToolbar(model, $event.btn)"
+                :toolbar="model.lineToolbar"
+              ></fctoolbar>
+            </div>
+            <div class="grpContent">
+              <fcbaseform
+                :value="mainObj"
+                :inforow="model.infoRow"
+                :rules="model.ruleInfo"
+                :name="model.gldGroupCode"
+                @labelclick="fieldLabelClick(model, mainObj, $event)"
+                @click="fieldClick(model, data, $event)"
+                @dblclick="fieldDblclick(model, data, $event)"
+                @blur="fieldBlur(model, data, $event)"
+                @focus="fieldFocus(model, data, $event)"
+                @change="fieldValueChange(model, data, $event)"
+              >
+                <template #baseform>
+                  <slot name="baseform"></slot>
+                </template>
+              </fcbaseform>
+            </div>
+            <div class="grpFooter">
+              <div class="analysis">
+                <div v-if="model.counteFields && model.counteFields.length !== 0">
+                  <span
+                    class="analysisItem"
+                    v-for="(anal, indexAnal) of model.counteFields"
+                    :key="indexAnal"
+                  >
+                    <template v-if="model.fields[anal]">
+                      {{ model.fields[anal].fieldName }}合计：{{
+                        mainObj[anal] || 0
+                      }};
+                    </template>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- <div class="footer" v-if="model.lineToolbar && model.lineToolbar.length !== 0">
+            <fctoolbar
+              @click="formToolbar($event.btn)"
+              :toolbar="model.lineToolbar"
+            ></fctoolbar>
+          </div> -->
+        </el-tab-pane>
+        <el-tab-pane
+          v-for="(cmodel, childIndex) of model.children"
+          :label="cmodel.title"
+          :key="childIndex"
+          :name="cmodel.fldGroupCode"
         >
           <div class="form">
             <div
               class="grpToolbar"
-              v-if="grp.toolbar && grp.toolbar.length !== 0"
+              v-if="cmodel.toolbar && cmodel.toolbar.length !== 0"
             >
-             <fctoolbar @click="groupToolbar(grp, $event.btn)" :toolbar="grp.toolbar"></fctoolbar>
+              <fctoolbar
+                @click="groupToolbar(cmodel, $event.btn)"
+                :toolbar="cmodel.toolbar"
+              ></fctoolbar>
             </div>
-            <div class="grpContent">
-              <fcbaseform v-if="index===0" :model="vm" :value="mainObj"
-                :inforow="grp.infoRow" :rules="grp.ruleInfo" :name="grp.gldGroupCode"
-                @click="fieldClick(grp, data, $event)"
-                @dblclick="fieldDblclick(grp, data, $event)"
-                @blur="fieldBlur(grp, data, $event)"
-                @focus="fieldFocus(grp, data, $event)"
-                @change="fieldValueChange(grp, data, $event)">
-                <template #baseform>
-                  <slot name="baseform"></slot>
+            <div class="grpContent" :hidden="cmodel.fldGroupOpen === false">
+              <template
+                v-if="
+                  cmodel.viewType === 'form' ||
+                  (cmodel.viewType === 'links' && cmodel.editType === 'listFormEdit')
+                "
+              >
+                <fcbaseform
+                  v-for="(data, cindex) of cmodel.data"
+                  :key="cindex"
+                  :value="data"
+                  :inforow="cmodel.infoRow"
+                  :rules="cmodel.ruleInfo"
+                  :name="cmodel.gldGroupCode"
+                  @labelclick="fieldLabelClick(cmodel, mainObj, $event)"
+                  @click="fieldClick(cmodel, data, $event)"
+                  @dblclick="fieldDblclick(cmodel, data, $event)"
+                  @blur="fieldBlur(cmodel, data, $event)"
+                  @focus="fieldFocus(cmodel, data, $event)"
+                  @change="fieldValueChange(cmodel, data, $event)"
+                >
+                  <template #baseform>
+                    <slot name="baseform"></slot>
+                  </template>
+                </fcbaseform>
+              </template>
+              <template v-else-if="cmodel.viewType === 'links'">
+                <template v-if="cmodel.editType === 'listEdit'">
+                  <fctable
+                    :tableInfo="cmodel"
+                    :height="200"
+                    :isloading="isLoading"
+                    :value="cmodel.data"
+                    @toolbar="tableToolbar(cmodel, $event)"
+                    @cellclick="tableCellClick(cmodel, $event)"
+                    @celldblclick="tableCellDblClick(cmodel, $event)"
+                    @rowclick="tableRowClick(cmodel, $event)"
+                    @rowdblclick="tableRowDblClick(cmodel, $event)"
+                    @sortchange="tableSortChange(cmodel, $event)"
+                    @headerclick="tableHeaderClick(cmodel, $event)"
+                    @rowcontextmenu="tableRowContextmenu(cmodel, $event)"
+                    @headercontextmenu="tableHeaderContextmenu(cmodel, $event)"
+                    @selectionchange="tableSelectionChange(cmodel, $event)"
+                    @selectall="tableSelectAll(cmodel, $event)"
+                    @select="tableSelectOne(cmodel, $event)"
+                    @pagechange="tablePageChange(cmodel, $event)"
+                    @linkclick="tableLinkClick(cmodel, $event)"
+                    @click="tableFieldClick(cmodel, cmodel.data, $event)"
+                    @dblclick="tableFieldDblclick(cmodel, cmodel.data, $event)"
+                    @blur="tableFieldBlur(cmodel, cmodel.data, $event)"
+                    @focus="tableFieldFocus(cmodel, cmodel.data, $event)"
+                    @change="tableFieldValueChange(cmodel, cmodel.data, $event)"
+                  ></fctable>
                 </template>
-              </fcbaseform>
-              <fcbaseform else-if v-for="(data,cindex) of grp.data" :key="cindex"
-                :model="vm" :value="data" :inforow="grp.infoRow" :rules="grp.ruleInfo" :name="grp.gldGroupCode"
-                @click="fieldClick(grp, data, $event)"
-                @dblclick="fieldDblclick(grp, data, $event)"
-                @blur="fieldBlur(grp, data, $event)"
-                @focus="fieldFocus(grp, data, $event)"
-                @change="fieldValueChange(grp, data, $event)">
-                <template #baseform>
-                  <slot name="baseform"></slot>
+                <template v-else-if="cmodel.editType === 'dialogEdit'">
+                  <el-dialog
+                    :title="cmodel.title"
+                    :visible="cmodel.formShow === true"
+                    width="70%"
+                    v-dialogDrag
+                    :before-close="formClose"
+                    append-to-body
+                  >
+                    <fcbaseform
+                      v-for="(data, cindex) of cmodel.data"
+                      :key="cindex"
+                      :value="data"
+                      :inforow="cmodel.infoRow"
+                      :rules="cmodel.ruleInfo"
+                      :name="cmodel.gldGroupCode"
+                      @labelclick="fieldLabelClick(cmodel, mainObj, $event)"
+                      @click="fieldClick(cmodel, data, $event)"
+                      @dblclick="fieldDblclick(cmodel, data, $event)"
+                      @blur="fieldBlur(cmodel, data, $event)"
+                      @focus="fieldFocus(cmodel, data, $event)"
+                      @change="fieldValueChange(cmodel, data, $event)"
+                    >
+                      <template #baseform>
+                        <slot name="baseform"></slot>
+                      </template>
+                    </fcbaseform>
+                  </el-dialog>
                 </template>
-              </fcbaseform>
+              </template>
             </div>
-            <div class="formContent" v-if="grp.children">
+            <div class="grpFooter" v-if="cmodel.toolbarView">
+              <div v-if="cmodel.toolbarView === 'bottomRight'">
+                <fctoolbar
+                  @click="groupToolbar(cmodel, $event.btn)"
+                  :toolbar="cmodel.linetoolbar"
+                ></fctoolbar>
+              </div>
+            </div>
+            <div class="formContent" v-if="cmodel.children">
               <div
                 class="form"
-                v-for="(cgrp, childIndex) of grp.children"
-                :key="childIndex"
+                v-for="(ccmodel, cchildIndex) of cmodel.children"
+                :key="cchildIndex"
               >
                 <div class="grpTitle">
-                  <div class="title">{{ cgrp.fldGroupName }}</div>
+                  <div class="title">{{ ccmodel.title }}</div>
                   <div class="analysis">
                     <div
-                      v-if="cgrp.counteFields && cgrp.counteFields.length !== 0"
+                      v-if="ccmodel.counteFields && ccmodel.counteFields.length !== 0"
                     >
                       <span
                         class="analysisItem"
-                        v-for="(canal, cindexAnal) of cgrp.counteFields"
+                        v-for="(canal, cindexAnal) of ccmodel.counteFields"
                         :key="cindexAnal"
                       >
-                        <template v-if="vm.fields[canal]">
-                          {{ vm.fields[canal].fieldName }}合计：{{
+                        <template v-if="ccmodel.fields[canal]">
+                          {{ ccmodel.fields[canal].fieldName }}合计：{{
                             mainObj[anal] || 0
                           }};
                         </template>
@@ -229,59 +430,137 @@
                   <div class="open">
                     <div
                       class="toolbar"
-                      v-if="!cgrp.toolbarView || cgrp.toolbarView === 'title'"
+                      v-if="!ccmodel.toolbarView || ccmodel.toolbarView === 'topRight'"
                     >
                       <span
                         class="btn"
-                        v-for="(cbtn, cbtnIndex) of cgrp.toolbar"
+                        v-for="(cbtn, cbtnIndex) of ccmodel.toolbar"
                         :key="cbtnIndex"
                         size="mini"
-                        @click="groupToolbar(cgrp, cbtn)"
+                        @click="groupToolbar(ccmodel, cbtn)"
                         >{{ $t(cbtn.btnName) }}</span
                       >
                     </div>
                     <i
                       class="el-icon-arrow-left"
-                      @click="showLine(cgrp)"
-                      v-if="cgrp.fldGroupOpen === false"
+                      @click="showLine(ccmodel)"
+                      v-if="ccmodel.fldGroupOpen === false"
                     ></i>
                     <i
                       class="el-icon-arrow-down"
-                      @click="showLine(cgrp)"
+                      @click="showLine(ccmodel)"
                       v-else
                     ></i>
                   </div>
                 </div>
-                <div class="grpContent" :hidden="cgrp.fldGroupOpen === false">
-                  <fcbaseform  v-for="(data,index) of cgrp.data" :key="index"
-                    :model="vm" :value="data" :inforow="cgrp.infoRow" :rules="cgrp.ruleInfo" :name="cgrp.gldGroupCode"
-                    @click="fieldClick(cgrp, data, $event)"
-                    @dblclick="fieldDblclick(cgrp, data, $event)"
-                    @blur="fieldBlur(cgrp, data, $event)"
-                    @focus="fieldFocus(cgrp, data, $event)"
-                    @change="fieldValueChange(cgrp, data, $event)">
-                    <template #baseform>
-                      <slot name="baseform"></slot>
+                <div class="grpContent" :hidden="ccmodel.fldGroupOpen === false">
+                  <template
+                    v-if="
+                      ccmodel.viewType === 'form' ||
+                      (ccmodel.viewType === 'links' &&
+                        ccmodel.editType === 'listFormEdit')
+                    "
+                  >
+                    <fcbaseform
+                      v-for="(data, cindex) of ccmodel.data"
+                      :key="cindex"
+                      :value="data"
+                      :inforow="ccmodel.infoRow"
+                      :rules="ccmodel.ruleInfo"
+                      :name="ccmodel.gldGroupCode"
+                      @labelclick="fieldLabelClick(ccmodel, mainObj, $event)"
+                      @click="fieldClick(ccmodel, data, $event)"
+                      @dblclick="fieldDblclick(ccmodel, data, $event)"
+                      @blur="fieldBlur(ccmodel, data, $event)"
+                      @focus="fieldFocus(ccmodel, data, $event)"
+                      @change="fieldValueChange(ccmodel, data, $event)"
+                    >
+                      <template #baseform>
+                        <slot name="baseform"></slot>
+                      </template>
+                    </fcbaseform>
+                  </template>
+                  <template v-else-if="ccmodel.viewType === 'links'">
+                    <template v-if="ccmodel.editType === 'listEdit'">
+                      <fctable
+                        :tableInfo="ccmodel"
+                        :height="200"
+                        :isloading="isLoading"
+                        :value="ccmodel.data"
+                        @toolbar="tableToolbar(ccmodel, $event)"
+                        @cellclick="tableCellClick(ccmodel, $event)"
+                        @celldblclick="tableCellDblClick(ccmodel, $event)"
+                        @rowclick="tableRowClick(ccmodel, $event)"
+                        @rowdblclick="tableRowDblClick(ccmodel, $event)"
+                        @sortchange="tableSortChange(ccmodel, $event)"
+                        @headerclick="tableHeaderClick(ccmodel, $event)"
+                        @rowcontextmenu="tableRowContextmenu(ccmodel, $event)"
+                        @headercontextmenu="
+                          tableHeaderContextmenu(ccmodel, $event)
+                        "
+                        @selectionchange="tableSelectionChange(ccmodel, $event)"
+                        @selectall="tableSelectAll(ccmodel, $event)"
+                        @select="tableSelectOne(ccmodel, $event)"
+                        @pagechange="tablePageChange(ccmodel, $event)"
+                        @linkclick="tableLinkClick(ccmodel, $event)"
+                        @click="tableFieldClick(ccmodel, ccmodel.data, $event)"
+                        @dblclick="tableFieldDblclick(ccmodel, ccmodel.data, $event)"
+                        @blur="tableFieldBlur(ccmodel, ccmodel.data, $event)"
+                        @focus="tableFieldFocus(ccmodel, ccmodel.data, $event)"
+                        @change="tableFieldValueChange(ccmodel, ccmodel.data, $event)"
+                      ></fctable>
                     </template>
-                  </fcbaseform>
+                    <template v-else-if="ccmodel.editType === 'dialogEdit'">
+                      <el-dialog
+                        :title="ccmodel.title"
+                        :visible="ccmodel.formShow === true"
+                        width="70%"
+                        :before-close="formClose"
+                        v-dialogDrag
+                        append-to-body
+                      >
+                        <fcbaseform
+                          v-for="(data, cindex) of ccmodel.data"
+                          :key="cindex"
+                          :value="data"
+                          :inforow="ccmodel.infoRow"
+                          :rules="ccmodel.ruleInfo"
+                          :name="ccmodel.gldGroupCode"
+                          @labelclick="fieldLabelClick(ccmodel, mainObj, $event)"
+                          @click="fieldClick(ccmodel, data, $event)"
+                          @dblclick="fieldDblclick(ccmodel, data, $event)"
+                          @blur="fieldBlur(ccmodel, data, $event)"
+                          @focus="fieldFocus(ccmodel, data, $event)"
+                          @change="fieldValueChange(ccmodel, data, $event)"
+                        >
+                          <template #baseform>
+                            <slot name="baseform"></slot>
+                          </template>
+                        </fcbaseform>
+                      </el-dialog>
+                    </template>
+                  </template>
                 </div>
-                <div class="grpFooter" v-if="cgrp.fldGroupOpen">
-                  <div v-if="cgrp.toolbarView === 'blank'">
-                    <fctoolbar @click="groupToolbar(cgrp, $event.btn)" :toolbar="cgrp.toolbar"></fctoolbar>
+                <div class="grpFooter" v-if="ccmodel.fldGroupOpen">
+                  <div v-if="ccmodel.toolbarView === 'bottomRight'">
+                    <fctoolbar
+                      @click="groupToolbar(ccmodel, $event.btn)"
+                      :toolbar="ccmodel.toolbar"
+                    ></fctoolbar>
                   </div>
                 </div>
               </div>
             </div>
             <div class="grpFooter">
               <div class="analysis">
-                <div v-if="grp.counteFields && grp.counteFields.length !== 0">
+                <div v-if="cmodel.counteFields && cmodel.counteFields.length !== 0">
                   <span
                     class="analysisItem"
-                    v-for="(anal, indexAnal) of grp.counteFields"
+                    v-for="(anal, indexAnal) of cmodel.counteFields"
                     :key="indexAnal"
                   >
-                    <template v-if="vm.fields[anal]">
-                      {{ vm.fields[anal].fieldName }}合计：{{
+                    <template v-if="cmodel.fields[anal]">
+                      {{ cmodel.fields[anal].fieldName }}合计：{{
                         mainObj[anal] || 0
                       }};
                     </template>
@@ -290,92 +569,209 @@
               </div>
             </div>
           </div>
-          <div class="footer" v-if="vm.formInfo.toolbar">
-            <fctoolbar @click="formToolbar($event.btn)" :toolbar="vm.formInfo.toolbar"></fctoolbar>
+          <div class="footer" v-if="model.linetoolbar">
+            <fctoolbar
+              @click="formToolbar($event.btn)"
+              :toolbar="model.linetoolbar"
+            ></fctoolbar>
           </div>
         </el-tab-pane>
       </el-tabs>
     </template>
-    <template v-else-if="vm.formInfo.childViewType === 'tablist'">
+    <template v-else-if="model.childViewType === 'tablist'">
       <div class="formContent">
-        <div
-          class="form"
-          v-for="(grp, index) of vm.formInfo.fldGroup"
-          :key="index"
-        >
-          <template v-if="index === 0">
-            <div class="grpTitle" :style="{backgroundColor:index!==0?'#e8e3e3':'#fff'}">
-              <div :class="{'title':index!==0}">{{index!==0?grp.fldGroupName:''}}</div>
-              <div class="analysis">
-                <div v-if="index===0">{{ grp.fldGroupName }}</div>
-                <div v-if="grp.counteFields && grp.counteFields.length !== 0">
-                  <span
-                    class="analysisItem"
-                    v-for="(anal, indexAnal) of grp.counteFields"
-                    :key="indexAnal"
-                  >
-                    <template v-if="vm.fields[anal]">
-                      {{ vm.fields[anal].fieldName }}合计：{{
-                        mainObj[anal] || 0
-                      }};
-                    </template>
-                  </span>
-                </div>
-              </div>
-              <div class="open">
-                <div
-                  class="toolbar"
-                  v-if="!grp.toolbarView || grp.toolbarView === 'title'"
+        <div class="form">
+          <div
+            class="grpTitle"
+            :style="{ backgroundColor:'#fff' }"
+          >
+            <div class="analysis">
+              <div>{{ model.title }}</div>
+              <div v-if="model.counteFields && model.counteFields.length !== 0">
+                <span
+                  class="analysisItem"
+                  v-for="(anal, indexAnal) of model.counteFields"
+                  :key="indexAnal"
                 >
-                  <span
-                    class="btn"
-                    v-for="(btn, btnIndex) of grp.toolbar"
-                    :key="btnIndex"
-                    size="mini"
-                    @click="groupToolbar(grp, btn)"
-                    >{{ $t(btn.btnName) }}</span
-                  >
-                </div>
-                <i
-                  class="el-icon-arrow-left"
-                  @click="showLine(grp)"
-                  v-if="grp.fldGroupOpen === false"
-                ></i>
-                <i class="el-icon-arrow-down" @click="showLine(grp)" v-else></i>
+                  <template v-if="model.fields[anal]">
+                    {{ model.fields[anal].fieldName }}合计：{{
+                      mainObj[anal] || 0
+                    }};
+                  </template>
+                </span>
               </div>
             </div>
-            <div class="grpContent" :hidden="grp.fldGroupOpen === false">
-              <fcbaseform :model="vm" :value="mainObj"
-                :inforow="grp.infoRow" :rules="grp.ruleInfo" :name="grp.gldGroupCode"
-                @click="fieldClick(grp, mainObj, $event)"
-                @dblclick="fieldDblclick(grp, mainObj, $event)"
-                @blur="fieldBlur(grp, mainObj, $event)"
-                @focus="fieldFocus(grp, mainObj, $event)"
-                @change="fieldValueChange(grp, mainObj, $event)">
-                <template #baseform>
-                  <slot name="baseform"></slot>
-                </template>
-              </fcbaseform>
+            <div class="open">
+              <div
+                class="toolbar"
+                v-if="!model.toolbarView || model.toolbarView === 'topRight'"
+              >
+                <span
+                  class="btn"
+                  v-for="(btn, btnIndex) of model.toolbar"
+                  :key="btnIndex"
+                  size="mini"
+                  @click="groupToolbar(model, btn)"
+                  >{{ $t(btn.btnName) }}</span
+                >
+              </div>
+              <i
+                class="el-icon-arrow-left"
+                @click="showLine(model)"
+                v-if="model.fldGroupOpen === false"
+              ></i>
+              <i class="el-icon-arrow-down" @click="showLine(model)" v-else></i>
             </div>
-            <div class="formContent" v-if="grp.children">
+          </div>
+          <div class="grpContent" :hidden="model.fldGroupOpen === false">
+            <fcbaseform
+              :value="mainObj"
+              :inforow="model.infoRow"
+              :rules="model.ruleInfo"
+              :name="model.gldGroupCode"
+              @labelclick="fieldLabelClick(model, mainObj, $event)"
+              @click="fieldClick(model, mainObj, $event)"
+              @dblclick="fieldDblclick(model, mainObj, $event)"
+              @blur="fieldBlur(model, mainObj, $event)"
+              @focus="fieldFocus(model, mainObj, $event)"
+              @change="fieldValueChange(model, mainObj, $event)"
+            >
+              <template #baseform>
+                <slot name="baseform"></slot>
+              </template>
+            </fcbaseform>
+          </div>
+        </div>
+      </div>
+      <el-tabs :value="model.children[0].fldGroupCode">
+        <el-tab-pane
+          v-for="(cmodel, childIndex) of model.children"
+          :label="cmodel.title"
+          :key="childIndex"
+          :name="cmodel.fldGroupCode"
+        >
+          <div class="form">
+            <div
+              class="grpToolbar"
+              v-if="cmodel.toolbar && cmodel.toolbar.length !== 0"
+            >
+              <fctoolbar
+                @click="groupToolbar(cmodel, $event.btn)"
+                :toolbar="cmodel.toolbar"
+              ></fctoolbar>
+            </div>
+            <div class="grpContent" :hidden="cmodel.fldGroupOpen === false">
+              <template
+                v-if="
+                  cmodel.viewType === 'form' ||
+                  (cmodel.viewType === 'links' && cmodel.editType === 'listFormEdit')
+                "
+              >
+                <fcbaseform
+                  v-for="(data, cindex) of cmodel.data"
+                  :key="cindex"
+                  :value="data"
+                  :inforow="cmodel.infoRow"
+                  :rules="cmodel.ruleInfo"
+                  :name="cmodel.gldGroupCode"
+                  @labelclick="fieldLabelClick(cmodel, mainObj, $event)"
+                  @click="fieldClick(cmodel, data, $event)"
+                  @dblclick="fieldDblclick(cmodel, data, $event)"
+                  @blur="fieldBlur(cmodel, data, $event)"
+                  @focus="fieldFocus(cmodel, data, $event)"
+                  @change="fieldValueChange(cmodel, data, $event)"
+                >
+                  <template #baseform>
+                    <slot name="baseform"></slot>
+                  </template>
+                </fcbaseform>
+              </template>
+              <template v-else-if="cmodel.viewType === 'links'">
+                <template v-if="cmodel.editType === 'listEdit'">
+                  <fctable
+                    :tableInfo="cmodel"
+                    :height="200"
+                    :isloading="isLoading"
+                    :value="cmodel.data"
+                    @toolbar="tableToolbar(cmodel, $event)"
+                    @cellclick="tableCellClick(cmodel, $event)"
+                    @celldblclick="tableCellDblClick(cmodel, $event)"
+                    @rowclick="tableRowClick(cmodel, $event)"
+                    @rowdblclick="tableRowDblClick(cmodel, $event)"
+                    @sortchange="tableSortChange(cmodel, $event)"
+                    @headerclick="tableHeaderClick(cmodel, $event)"
+                    @rowcontextmenu="tableRowContextmenu(cmodel, $event)"
+                    @headercontextmenu="tableHeaderContextmenu(cmodel, $event)"
+                    @selectionchange="tableSelectionChange(cmodel, $event)"
+                    @selectall="tableSelectAll(cmodel, $event)"
+                    @select="tableSelectOne(cmodel, $event)"
+                    @pagechange="tablePageChange(cmodel, $event)"
+                    @linkclick="tableLinkClick(cmodel, $event)"
+                    @click="tableFieldClick(cmodel, cmodel.data, $event)"
+                    @dblclick="tableFieldDblclick(cmodel, cmodel.data, $event)"
+                    @blur="tableFieldBlur(cmodel, cmodel.data, $event)"
+                    @focus="tableFieldFocus(cmodel, cmodel.data, $event)"
+                    @change="tableFieldValueChange(cmodel, cmodel.data, $event)"
+                  ></fctable>
+                </template>
+                <template v-else-if="cmodel.editType === 'dialogEdit'">
+                  <el-dialog
+                    :title="cmodel.title"
+                    :visible="cmodel.formShow === true"
+                    width="70%"
+                    v-dialogDrag
+                    :before-close="formClose"
+                    append-to-body
+                  >
+                    <fcbaseform
+                      v-for="(data, cindex) of cmodel.data"
+                      :key="cindex"
+                      :value="data"
+                      :inforow="cmodel.infoRow"
+                      :rules="cmodel.ruleInfo"
+                      :name="cmodel.gldGroupCode"
+                      @labelclick="fieldLabelClick(cmodel, mainObj, $event)"
+                      @click="fieldClick(cmodel, data, $event)"
+                      @dblclick="fieldDblclick(cmodel, data, $event)"
+                      @blur="fieldBlur(cmodel, data, $event)"
+                      @focus="fieldFocus(cmodel, data, $event)"
+                      @change="fieldValueChange(cmodel, data, $event)"
+                    >
+                      <template #baseform>
+                        <slot name="baseform"></slot>
+                      </template>
+                    </fcbaseform>
+                  </el-dialog>
+                </template>
+              </template>
+            </div>
+            <div class="grpFooter" v-if="cmodel.toolbarView">
+              <div v-if="cmodel.toolbarView === 'bottomRight'">
+                <fctoolbar
+                  @click="groupToolbar(cmodel, $event.btn)"
+                  :toolbar="cmodel.linetoolbar"
+                ></fctoolbar>
+              </div>
+            </div>
+            <div class="formContent" v-if="cmodel.children">
               <div
                 class="form"
-                v-for="(cgrp, childIndex) of grp.children"
-                :key="childIndex"
+                v-for="(ccmodel, cchildIndex) of cmodel.children"
+                :key="cchildIndex"
               >
                 <div class="grpTitle">
-                  <div class="title">{{ cgrp.fldGroupName }}</div>
+                  <div class="title">{{ ccmodel.title }}</div>
                   <div class="analysis">
                     <div
-                      v-if="cgrp.counteFields && cgrp.counteFields.length !== 0"
+                      v-if="ccmodel.counteFields && ccmodel.counteFields.length !== 0"
                     >
                       <span
                         class="analysisItem"
-                        v-for="(canal, cindexAnal) of cgrp.counteFields"
+                        v-for="(canal, cindexAnal) of ccmodel.counteFields"
                         :key="cindexAnal"
                       >
-                        <template v-if="vm.fields[canal]">
-                          {{ vm.fields[canal].fieldName }}合计：{{
+                        <template v-if="ccmodel.fields[canal]">
+                          {{ ccmodel.fields[canal].fieldName }}合计：{{
                             mainObj[anal] || 0
                           }};
                         </template>
@@ -385,274 +781,428 @@
                   <div class="open">
                     <div
                       class="toolbar"
-                      v-if="!cgrp.toolbarView || cgrp.toolbarView === 'title'"
+                      v-if="!ccmodel.toolbarView || ccmodel.toolbarView === 'topRight'"
                     >
                       <span
                         class="btn"
-                        v-for="(cbtn, cbtnIndex) of cgrp.toolbar"
+                        v-for="(cbtn, cbtnIndex) of ccmodel.toolbar"
                         :key="cbtnIndex"
                         size="mini"
-                        @click="groupToolbar(cgrp, cbtn)"
+                        @click="groupToolbar(ccmodel, cbtn)"
                         >{{ $t(cbtn.btnName) }}</span
                       >
                     </div>
                     <i
                       class="el-icon-arrow-left"
-                      @click="showLine(cgrp)"
-                      v-if="cgrp.fldGroupOpen === false"
+                      @click="showLine(ccmodel)"
+                      v-if="ccmodel.fldGroupOpen === false"
                     ></i>
                     <i
                       class="el-icon-arrow-down"
-                      @click="showLine(cgrp)"
+                      @click="showLine(ccmodel)"
                       v-else
                     ></i>
                   </div>
                 </div>
-                <div class="grpContent" :hidden="cgrp.fldGroupOpen === false">
-                  <fcbaseform  v-for="(data,cindex) of cgrp.data" :key="cindex"
-                    :model="vm" :value="data" :inforow="cgrp.infoRow" :rules="cgrp.ruleInfo" :name="cgrp.gldGroupCode"
-                    @click="fieldClick(cgrp, data, $event)"
-                    @dblclick="fieldDblclick(cgrp, data, $event)"
-                    @blur="fieldBlur(cgrp, data, $event)"
-                    @focus="fieldFocus(cgrp, data, $event)"
-                    @change="fieldValueChange(cgrp, data, $event)">
-                    <template #baseform>
-                      <slot name="baseform"></slot>
-                    </template>
-                  </fcbaseform>
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-      <div class="footer" v-if="vm.formInfo.toolbar">
-        <fctoolbar @click="formToolbar($event.btn)" :toolbar="vm.formInfo.toolbar"></fctoolbar>
-      </div>
-      <el-tabs v-if="vm.formInfo.fldGroup.length>1" :value="vm.formInfo.fldGroup[1].fldGroupCode">
-        <template v-for="(grp, index) of vm.formInfo.fldGroup">
-          <el-tab-pane
-            :label="grp.fldGroupName"
-            name="baseform"
-            v-if="index > 0"
-            :key="index"
-          >
-            <div class="form">
-              <div
-                class="grpToolbar"
-                v-if="grp.toolbar && grp.toolbar.length !== 0"
-              >
-              <fctoolbar @click="groupToolbar(grp,$event.btn)" :toolbar="grp.toolbar"></fctoolbar>
-              </div>
-              <div class="grpContent">
-                <fcbaseform v-for="(data,cindex) of grp.data" :key="cindex"
-                  :model="vm" :value="data" :inforow="grp.infoRow" :rules="grp.ruleInfo" :name="grp.gldGroupCode"
-                  @click="fieldClick(grp, data, $event)"
-                  @dblclick="fieldDblclick(grp, data, $event)"
-                  @blur="fieldBlur(grp, data, $event)"
-                  @focus="fieldFocus(grp, data, $event)"
-                  @change="fieldValueChange(grp, data, $event)">
-                  <template #baseform>
-                    <slot name="baseform"></slot>
-                  </template>
-                </fcbaseform>
-              </div>
-              <div class="formContent" v-if="grp.children">
-                <div
-                  class="form"
-                  v-for="(cgrp, childIndex) of grp.children"
-                  :key="childIndex"
-                >
-                  <div class="grpTitle">
-                    <div class="title">{{ cgrp.fldGroupName }}</div>
-                    <div class="analysis">
-                      <div
-                        v-if="
-                          cgrp.counteFields && cgrp.counteFields.length !== 0
-                        "
-                      >
-                        <span
-                          class="analysisItem"
-                          v-for="(canal, cindexAnal) of cgrp.counteFields"
-                          :key="cindexAnal"
-                        >
-                          <template v-if="vm.fields[canal]">
-                            {{ vm.fields[canal].fieldName }}合计：{{
-                              mainObj[anal] || 0
-                            }};
-                          </template>
-                        </span>
-                      </div>
-                    </div>
-                    <div class="open">
-                      <div
-                        class="toolbar"
-                        v-if="!cgrp.toolbarView || cgrp.toolbarView === 'title'"
-                      >
-                        <span
-                          class="btn"
-                          v-for="(cbtn, cbtnIndex) of cgrp.toolbar"
-                          :key="cbtnIndex"
-                          size="mini"
-                          @click="groupToolbar(cgrp, cbtn)"
-                          >{{ $t(cbtn.btnName) }}</span
-                        >
-                      </div>
-                      <i
-                        class="el-icon-arrow-left"
-                        @click="showLine(cgrp)"
-                        v-if="cgrp.fldGroupOpen === false"
-                      ></i>
-                      <i
-                        class="el-icon-arrow-down"
-                        @click="showLine(cgrp)"
-                        v-else
-                      ></i>
-                    </div>
-                  </div>
-                  <div class="grpContent" :hidden="cgrp.fldGroupOpen === false">
-                    <fcbaseform  v-for="(data,index) of cgrp.data" :key="index"
-                      :model="vm" :value="data" :inforow="cgrp.infoRow" :rules="cgrp.ruleInfo" :name="cgrp.gldGroupCode"
-                      @click="fieldClick(cgrp, data, $event)"
-                      @dblclick="fieldDblclick(cgrp, data, $event)"
-                      @blur="fieldBlur(cgrp, data, $event)"
-                      @focus="fieldFocus(cgrp, data, $event)"
-                      @change="fieldValueChange(cgrp, data, $event)">
+                <div class="grpContent" :hidden="ccmodel.fldGroupOpen === false">
+                  <template
+                    v-if="
+                      ccmodel.viewType === 'form' ||
+                      (ccmodel.viewType === 'links' &&
+                        ccmodel.editType === 'listFormEdit')
+                    "
+                  >
+                    <fcbaseform
+                      v-for="(data, cindex) of ccmodel.data"
+                      :key="cindex"
+                      :value="data"
+                      :inforow="ccmodel.infoRow"
+                      :rules="ccmodel.ruleInfo"
+                      :name="ccmodel.gldGroupCode"
+                      @labelclick="fieldLabelClick(ccmodel, mainObj, $event)"
+                      @click="fieldClick(ccmodel, data, $event)"
+                      @dblclick="fieldDblclick(ccmodel, data, $event)"
+                      @blur="fieldBlur(ccmodel, data, $event)"
+                      @focus="fieldFocus(ccmodel, data, $event)"
+                      @change="fieldValueChange(ccmodel, data, $event)"
+                    >
                       <template #baseform>
                         <slot name="baseform"></slot>
                       </template>
                     </fcbaseform>
-                  </div>
-                  <div class="grpFooter" v-if="cgrp.fldGroupOpen">
-                    <div v-if="cgrp.toolbarView === 'blank'">
-                      <fctoolbar @click="groupToolbar(cgrp,$event.btn)" :toolbar="cgrp.toolbar"></fctoolbar>
-                    </div>
-                  </div>
+                  </template>
+                  <template v-else-if="ccmodel.viewType === 'links'">
+                    <template v-if="ccmodel.editType === 'listEdit'">
+                      <fctable
+                        :tableInfo="ccmodel"
+                        :height="200"
+                        :isloading="isLoading"
+                        :value="ccmodel.data"
+                        @toolbar="tableToolbar(ccmodel, $event)"
+                        @cellclick="tableCellClick(ccmodel, $event)"
+                        @celldblclick="tableCellDblClick(ccmodel, $event)"
+                        @rowclick="tableRowClick(ccmodel, $event)"
+                        @rowdblclick="tableRowDblClick(ccmodel, $event)"
+                        @sortchange="tableSortChange(ccmodel, $event)"
+                        @headerclick="tableHeaderClick(ccmodel, $event)"
+                        @rowcontextmenu="tableRowContextmenu(ccmodel, $event)"
+                        @headercontextmenu="
+                          tableHeaderContextmenu(ccmodel, $event)
+                        "
+                        @selectionchange="tableSelectionChange(ccmodel, $event)"
+                        @selectall="tableSelectAll(ccmodel, $event)"
+                        @select="tableSelectOne(ccmodel, $event)"
+                        @pagechange="tablePageChange(ccmodel, $event)"
+                        @linkclick="tableLinkClick(ccmodel, $event)"
+                        @click="tableFieldClick(ccmodel, ccmodel.data, $event)"
+                        @dblclick="tableFieldDblclick(ccmodel, ccmodel.data, $event)"
+                        @blur="tableFieldBlur(ccmodel, ccmodel.data, $event)"
+                        @focus="tableFieldFocus(ccmodel, ccmodel.data, $event)"
+                        @change="tableFieldValueChange(ccmodel, ccmodel.data, $event)"
+                      ></fctable>
+                    </template>
+                    <template v-else-if="ccmodel.editType === 'dialogEdit'">
+                      <el-dialog
+                        :title="ccmodel.title"
+                        :visible="ccmodel.formShow === true"
+                        width="70%"
+                        :before-close="formClose"
+                        v-dialogDrag
+                        append-to-body
+                      >
+                        <fcbaseform
+                          v-for="(data, cindex) of ccmodel.data"
+                          :key="cindex"
+                          :value="data"
+                          :inforow="ccmodel.infoRow"
+                          :rules="ccmodel.ruleInfo"
+                          :name="ccmodel.gldGroupCode"
+                          @labelclick="fieldLabelClick(ccmodel, mainObj, $event)"
+                          @click="fieldClick(ccmodel, data, $event)"
+                          @dblclick="fieldDblclick(ccmodel, data, $event)"
+                          @blur="fieldBlur(ccmodel, data, $event)"
+                          @focus="fieldFocus(ccmodel, data, $event)"
+                          @change="fieldValueChange(ccmodel, data, $event)"
+                        >
+                          <template #baseform>
+                            <slot name="baseform"></slot>
+                          </template>
+                        </fcbaseform>
+                      </el-dialog>
+                    </template>
+                  </template>
                 </div>
-              </div>
-              <div class="grpFooter">
-                <div class="analysis">
-                  <div v-if="grp.counteFields && grp.counteFields.length !== 0">
-                    <span
-                      class="analysisItem"
-                      v-for="(anal, indexAnal) of grp.counteFields"
-                      :key="indexAnal"
-                    >
-                      <template v-if="vm.fields[anal]">
-                        {{ vm.fields[anal].fieldName }}合计：{{
-                          mainObj[anal] || 0
-                        }};
-                      </template>
-                    </span>
+                <div class="grpFooter" v-if="ccmodel.fldGroupOpen">
+                  <div v-if="ccmodel.toolbarView === 'bottomRight'">
+                    <fctoolbar
+                      @click="groupToolbar(ccmodel, $event.btn)"
+                      :toolbar="ccmodel.toolbar"
+                    ></fctoolbar>
                   </div>
                 </div>
               </div>
             </div>
-          </el-tab-pane>
-        </template>
+            <div class="grpFooter">
+              <div class="analysis">
+                <div v-if="cmodel.counteFields && cmodel.counteFields.length !== 0">
+                  <span
+                    class="analysisItem"
+                    v-for="(anal, indexAnal) of cmodel.counteFields"
+                    :key="indexAnal"
+                  >
+                    <template v-if="cmodel.fields[anal]">
+                      {{ cmodel.fields[anal].fieldName }}合计：{{
+                        mainObj[anal] || 0
+                      }};
+                    </template>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer" v-if="model.linetoolbar">
+            <fctoolbar
+              @click="formToolbar($event.btn)"
+              :toolbar="model.linetoolbar"
+            ></fctoolbar>
+          </div>
+        </el-tab-pane>
       </el-tabs>
+      <!-- <div class="footer" v-if="model.linetoolbar">
+        <fctoolbar
+          @click="formToolbar($event.btn)"
+          :toolbar="model.linetoolbar"
+        ></fctoolbar>
+      </div> -->
     </template>
   </div>
 </template>
 <script>
-import ViewModel from './list-form';
-import fcbaseform from './baseform';
-import fctable from './table';
-import fctoolbar from './toolbar';
+import ViewModel from './list-form'
+import fcbaseform from './baseform'
+import fctable from './table'
+import fctoolbar from './toolbar'
 
 export default {
   name: 'fcview',
   components: {
-    fcbaseform, fctoolbar, fctable,
+    fcbaseform,
+    fctoolbar,
+    fctable
+  },
+  data () {
+    return {
+      isLoading: false,
+      // 默认状态，当为-1时可以关闭，当为已保存时可以关闭
+      status: '-1'
+    }
   },
   props: {
-    model: {
+    formInfo: {
       type: Object,
-      default: () => {},
+      default: () => ({})
     },
     value: {
       type: Object,
-      default: () => {},
-    },
-  },
-  created() {
-    this.vm.initViewModel(this.vm.formInfo, this.vm.fields);
+      default: () => ({})
+    }
   },
   computed: {
-    vm() {
-      return { ...ViewModel, ...this.model };
+    mainObj () {
+      return { ...this.value }
     },
-    mainObj() {
-      return { ...this.value };
-    },
+    model () {
+      return { ...this.formInfo }
+    }
   },
   watch: {
-    vm() {
-      this.vm.initViewModel(this.vm.formInfo, this.vm.fields);
-    },
+    formInfo: {
+      handler () {
+        this.init()
+      },
+      deep: true,
+      immediate: true
+    }
   },
   methods: {
     /**
-     * 点击显示或隐藏分组或分区
+     * 初始化内容
      */
-    showLine(grp) {
-      grp.fldGroupOpen = !grp.fldGroupOpen;
-      this.event('titleclick', { grp });
+    init () {
+      ViewModel.initViewModel(this.model)
+      // ViewModel.initRuleModel(this.model);
     },
     /**
-     * 点击标题处理
+     * 点击显示或隐藏分组或分区
      */
-    labelClick(grp, field) {
-      this.event('labelclick', { grp, field });
+    showLine (grp) {
+      grp.fldGroupOpen = !grp.fldGroupOpen
+      this.event('titleclick', '显示隐藏', { grp })
     },
     /**
      * 分组工具栏事件
      * @param {*} grp 分组内容
      * @param {*} btn 按钮事件名称
      */
-    groupToolbar(grp, btn) {
-      this.event('grouptoolbar', { grp, btn });
+    groupToolbar (grp, btn) {
+      this.event('grouptoolbar', '分组工具栏事件', { grp, btn })
     },
     /**
      * 表单工具栏事件
      * @param {*} btn 按钮事件名称
      */
-    formToolbar(btn) {
-      this.event('toolbar', { eventname: btn.btnAct, btn });
+    formToolbar (btn) {
+      this.event('toolbar', '表单工具栏事件', { eventname: btn.btnAct, btn })
     },
-    fieldClick(grp, data, param) {
-      param.data = data;
-      this.event('click', { grp, ...param });
+    /**
+     * 点击标题处理
+     */
+    fieldLabelClick (grp, field) {
+      this.event('labelclick', '点击标题', { grp, field })
     },
-    fieldDblclick(grp, data, param) {
-      param.data = data;
-      this.event('dblClick', { grp, ...param });
+    /**
+     * 单击处理
+     */
+    fieldClick (grp, data, param) {
+      this.event('click', '单击', { grp, ...param })
     },
-    fieldBlur(grp, data, param) {
-      param.data = data;
-      this.event('blur', { grp, ...param });
+    /**
+     * 双击处理
+     */
+    fieldDblclick (grp, data, param) {
+      this.event('dblClick', '双击', { grp, ...param })
     },
-    fieldFocus(grp, data, param) {
-      param.data = data;
-      this.event('focus', { grp, ...param });
+    /**
+     * 失去焦点处理
+     */
+    fieldBlur (grp, data, param) {
+      this.event('blur', '失去失去焦点', { grp, ...param })
     },
-    fieldValueChange(grp, data, param) {
-      param.data = data;
-      this.mainObj = { ...param.value, ...param.change };
-      this.event('change', {
-        grp, ...param,
-      });
+    /**
+     * 获得焦点处理
+     */
+    fieldFocus (grp, data, param) {
+      this.event('focus', '获得焦点', { grp, ...param })
     },
-    event(eventname, param) {
+    /**
+     * 内容修改处理
+     */
+    fieldValueChange (grp, data, param) {
+      this.event('change', '内容修改', {
+        grp,
+        ...param
+      })
+    },
+    /**
+     * 列表工具栏事件
+     */
+    tableToolbar (grp, param) {
+      param.grp = grp
+      this.event('tabletoolbar', '列表工具栏', param)
+    },
+    /**
+     * 列表行点击事件处理
+     */
+    tableRowClick (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '行单击', param)
+    },
+    /**
+     * 双击行时，默认选中的对象修改为当前行，并打开浏览窗口
+     */
+    tableRowDblClick (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '行双击', param)
+    },
+    /**
+     * 列表单元格点击事件处理
+     */
+    tableCellClick (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '单元格单击', param)
+    },
+    /**
+     * 列表单元格双击事件处理
+     */
+    tableCellDblClick (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '单元格双击', param)
+    },
+    /**
+     * 打开链接，暂时支持查看当前明细
+     */
+    tableLinkClick (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '点击链接', param)
+    },
+    /**
+     * 列表排序处理
+     */
+    tableSortChange (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '排序', param)
+    },
+    /**
+     * 标题点击
+     */
+    tableHeaderClick (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '标题单击', param)
+    },
+    /**
+     * 行右键
+     */
+    tableRowContextmenu (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '行右键', param)
+    },
+    /**
+     * 标题右键
+     */
+    tableHeaderContextmenu (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '标题右键', param)
+    },
+    /**
+     * 选中行修改时
+     */
+    tableSelectionChange (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '选中行修改', param)
+    },
+    /**
+     * 全选事件
+     */
+    tableSelectAll (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '全选', param)
+    },
+    /**
+     * 单选一行
+     */
+    tableSelectOne (grp, param) {
+      param.grp = grp
+      this.event(`table${param.eventname}`, '单选', param)
+    },
+    /**
+     * 页数改变时
+     */
+    tablePageChange (grp, param) {
+      param.grp = grp
+      this.event('tablepagechange', '页数改变', {
+        eventname: 'pagenumChange',
+        ...param,
+        change: param.change
+      })
+    },
+    /**
+     * 列表字段单击处理
+     */
+    tableFieldClick (grp, data, param) {
+      this.event('tablefieldclick', '列表字段单击', { grp, ...param })
+    },
+    /**
+     * 列表字段双击处理
+     */
+    tableFieldDblclick (grp, data, param) {
+      this.event('tablefielddblclick', '列表字段双击', { grp, ...param })
+    },
+    /**
+     * 列表字段失去焦点处理
+     */
+    tableFieldBlur (grp, data, param) {
+      this.event('tablefieldblur', '列表字段失去焦点', { grp, ...param })
+    },
+    /**
+     * 列表字段获得焦点处理
+     */
+    tableFieldFocus (grp, data, param) {
+      this.event('tablefieldfocus', '列表字段获得焦点', { grp, ...param })
+    },
+    /**
+     * 列表字段内容修改处理
+     */
+    tableFieldValueChange (grp, data, param) {
+      this.event('tablefieldchange', '列表字段内容修改', {
+        grp,
+        ...param
+      })
+    },
+    event (eventname, desc, param) {
+      if (param.grp === undefined) {
+        param.grp = this.model.fldGroup[0]
+      }
       this.$emit(eventname, {
+        desc,
+        fldGroupCode: param.grp.fldGroupCode,
         eventname,
         ref: this.$refs.form,
-        value: this.mainObj,
-        ...param,
-      });
-    },
-  },
-};
+        value: { ...this.mainObj, ...param.change },
+        ...param
+      })
+    }
+  }
+}
 </script>
 
 <style lang="scss">

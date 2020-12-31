@@ -6,6 +6,12 @@ const state = () => {
   if (state === undefined || state === null) {
     state = JSON.stringify({
       sysproducts: [],
+      tabs: [{
+        title: '首页',
+        name: 'home',
+        content: 'home'
+      }],
+      activetab: '1',
       sysmenus: [],
       isLogin: false,
       sysuser: {},
@@ -69,6 +75,15 @@ const actions = {
         reject(err)
       })
     })
+  },
+  tabspush ({ commit }: any, tab: any) {
+    commit('tabspush', tab)
+  },
+  activetab ({ commit }: any, activetab: string) {
+    commit('activetab', activetab)
+  },
+  removetab ({ commit }: any, activetab: string) {
+    commit('removetab', activetab)
   }
 }
 
@@ -102,6 +117,43 @@ const mutations = {
   },
   system (state: any, s: any) {
     state = s
+    localStorage.setItem('state', JSON.stringify(state))
+  },
+  tabspush (state: any, tab: any) {
+    if (state.tabs) {
+      let existTab = false
+      state.tabs.forEach((t: any) => {
+        if (tab.name === t.name) {
+          existTab = true
+        }
+      })
+      if (existTab === false) {
+        state.tabs.push(tab)
+      }
+      state.activetab = tab.name
+      localStorage.setItem('state', JSON.stringify(state))
+    }
+  },
+  activetab (state: any, activetab: string) {
+    state.activetab = activetab
+    localStorage.setItem('state', JSON.stringify(state))
+  },
+  removetab (state: any, tabName: string) {
+    const tabs: any[] = []
+    let proTabName = ''
+    let needChangeValue = false
+    state.tabs.forEach((t: any) => {
+      if (tabName === t.name) {
+        needChangeValue = true
+      } else {
+        if (needChangeValue === false) {
+          proTabName = t.name
+        }
+        tabs.push(t)
+      }
+    })
+    state.activetab = proTabName
+    state.tabs = tabs
     localStorage.setItem('state', JSON.stringify(state))
   }
 }

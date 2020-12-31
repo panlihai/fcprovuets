@@ -1,31 +1,19 @@
 <template>
   <div>
-    <!-- 提示 -->
-    <template slot="label" v-if="field.inputType !== 'check'">
-      <el-tooltip
-        class="field"
-        effect="dark"
-        :content="field.description"
-        placement="left"
-        v-if="field.description"
-      >
-        <i class="el-icon-info"></i>
-      </el-tooltip>
-      <label v-text="field.fieldName" />
-    </template>
     <!-- 数值 -->
     <el-input-number
       :clearable="true"
       v-if="field.inputType === 'long'"
-      v-model="mainObj[field.fieldCode]"
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
+      v-model="mainObj[fieldCode]"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
       :disabled="field.readonly || false"
       :readonly="field.readonly || false"
-      @focus="fieldFocus(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
       :placeholder="'请填写' + field.fieldName"
+      :rules="rule"
     />
     <el-input-number
       :clearable="true"
@@ -33,57 +21,61 @@
       precision="2"
       :disabled="field.readonly || false"
       :readonly="field.readonly || false"
-      v-model="mainObj[field.fieldCode]"
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
-      @focus="fieldFocus(field)"
+      v-model="mainObj[fieldCode]"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
       :placeholder="'请填写' + field.fieldName"
+      :rules="rule"
     />
     <el-date-picker
       :clearable="true"
       v-else-if="field.inputType === 'date'"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       align="right"
       type="date"
       :readonly="field.readonly || false"
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
-      @focus="fieldFocus(field)"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
       :placeholder="'请选择' + field.fieldName"
+      :rules="rule"
     >
     </el-date-picker>
     <el-date-picker
       :clearable="true"
       v-else-if="field.inputType === 'datetime'"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       type="datetime"
       align="right"
       :readonly="field.readonly || false"
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
-      @focus="fieldFocus(field)"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
       :placeholder="'请选择' + field.fieldName"
+      :rules="rule"
     >
     </el-date-picker>
     <el-time-select
       :clearable="true"
       v-else-if="field.inputType === 'time'"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       align="right"
       type="date"
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
       :readonly="field.readonly || false"
-      @focus="fieldFocus(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
       :placeholder="'请选择' + field.fieldName"
+      :rules="rule"
     >
     </el-time-select>
     <!-- 大文本框 -->
@@ -92,57 +84,61 @@
       v-else-if="field.inputType === 'textarea'"
       rows="2"
       :readonly="field.readonly || false"
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
-      @focus="fieldFocus(field)"
-      v-model="mainObj[field.fieldCode]"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
+      @focus="focus(field)"
+      v-model="mainObj[fieldCode]"
       @change="valueChange(field, $event)"
       :placeholder="'请输入' + field.fieldName"
+      :rules="rule"
     />
     <!-- 弹出框 -->
     <el-input
       :clearable="true"
       v-else-if="field.inputType === 'table'"
       prefix-icon="el-icon-search"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       :disabled="field.readonly || false"
       readonly
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
-      @focus="fieldFocus(field)"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
       :placeholder="'请选择' + field.fieldName"
+      :rules="rule"
     ></el-input>
     <!-- 弹出框 -->
     <el-input
       :clearable="true"
       v-else-if="field.inputType === 'city'"
       prefix-icon="el-icon-search"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       :disabled="field.readonly || false"
       readonly
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
-      @focus="fieldFocus(field)"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
       :placeholder="'请选择' + field.fieldName"
+      :rules="rule"
     ></el-input>
     <!-- 选择框 -->
     <el-select
       :clearable="true"
       v-else-if="field.inputType === 'select'"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       :disabled="field.readonly || false"
       :readonly="field.readonly || false"
       :placeholder="'请选择' + field.fieldName"
       @change="valueChange(field, $event)"
+      :rules="rule"
     >
       <template v-if="field.dicCode">
         <el-option
-          v-for="opt of vm.select[field.dicCode]"
+          v-for="opt of select[field.dicCode]"
           :key="opt.value"
           :label="opt.label"
           :value="opt.value"
@@ -153,23 +149,25 @@
     <el-checkbox
       :clearable="true"
       v-else-if="field.inputType === 'check'"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       :disabled="field.readonly || false"
       :readonly="field.readonly || false"
       @change="valueChange(field, $event)"
+      :rules="rule"
     ></el-checkbox>
     <!-- 多选框 -->
     <el-checkbox-group
       :clearable="true"
       v-else-if="field.inputType === 'checkGroup'"
-      v-model="mainObj[field.fieldCode]"
+      v-model="mainObj[fieldCode]"
       :readonly="field.readonly || false"
       :disabled="field.readonly || false"
       @change="valueChange(field, $event)"
+      :rules="rule"
     >
       <template v-if="field.dicCode">
         <el-checkbox
-          v-for="opt of vm.select[field.dicCode]"
+          v-for="opt of select[field.dicCode]"
           :key="opt.value"
           :label="opt.value"
           >{{ opt.label }}</el-checkbox
@@ -186,25 +184,43 @@
       :disabled="field.readonly || false"
       :on-change="getFile"
       :on-remove="removeFile"
+      :rules="rule"
     >
       <i class="el-icon-plus avatar-uploader-icon"></i>
     </el-upload>
     <label
-      v-text="mainObj[field.fieldCode]"
+      v-text="mainObj[fieldCode]"
       v-else-if="field.inputType === 'label'"
     />
+    <div v-else-if="field.inputType === 'searchBtn'">
+      <i
+        class="el-icon-arrow-left extend"
+        @click="searchShow(true)" title="点击展开"
+        v-if="viewRowSize === 1 && maxrow!==1"
+      ></i>
+      <i class="el-icon-arrow-up extend" @click="searchShow($event)" v-if="viewRowSize !== 1"  title="点击收起"></i>
+      <el-button
+        type="primary" size="mini"
+        @click="search($event)"
+        icon="el-icon-search"
+        >查询</el-button
+      ><el-button @click="reset($event)"  size="mini" icon="el-icon-refresh">重置</el-button>
+    </div>
+    <div v-else-if="field.inputType === 'space'"></div>
     <!-- 文本框 -->
     <el-input
       :clearable="true"
       v-else
-      v-model="mainObj[field.fieldCode]"
-      @click.native="fieldClick(field)"
-      @dblclick.native="fieldDblclick(field)"
-      @blur="fieldBlur(field)"
+      v-model="mainObj[fieldCode]"
+      @click="click(field)"
+      @dblclick="dblclick(field)"
+      @blur="blur(field)"
       :readonly="field.readonly || false"
-      @focus="fieldFocus(field)"
+      @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请输入' + field.fieldName"
+      :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
+      :placeholder="placeholder===''?('请输入' + field.fieldName):''"
+      :rules="rule"
     />
   </div>
 </template>
@@ -212,27 +228,39 @@
 export default {
   name: 'fcbasefield',
   props: {
-    inforow: {
-      type: Array,
-      default: () => [],
-    },
     value: {
       type: Object,
-      default: () => {},
+      default: () => ({})
     },
-    rules: {
+    rule: {
       type: Object,
-      default: () => {},
+      default: () => ({})
     },
-    name: {
+    showlabel: {
+      type: Boolean,
+      default: () => true
+    },
+    field: {
+      type: Object,
+      default: () => ({})
+    },
+    // 在查询的时候显示默认的行数
+    viewRowSize: {
+      type: Number,
+      default: () => 1
+    },
+    placeholder: {
       type: String,
-      default: () => '',
+      default: () => ''
     },
+    // 查询时最大行数
+    maxrow: {
+      type: Number,
+      default: () => 1
+    }
   },
-  data() {
+  data () {
     return {
-      // 模型
-      vm: { ...ViewModel },
       // 数据对象
       mainObj: {},
       // 查询条件
@@ -256,48 +284,49 @@ export default {
         {
           btnCode: 'btnConfirm',
           btnName: '确定',
-          btnAct: 'confirm',
+          btnAct: 'confirm'
         },
         {
           btnCode: 'btnClose',
           btnName: '关闭',
-          btnAct: 'close',
-        },
+          btnAct: 'close'
+        }
       ],
-    };
+      select: {
+      },
+      fieldCode: ''
+    }
   },
   /**
    * 数据初始化 字典初始化
    */
-  created() {
-    this.mainObj = { ...this.value };
-    const promiseAll = [];
-    const fields = [];
-    this.inforow.forEach((field) => {
-      switch (field.inputType) {
-        case 'combo':
-        case 'radio':
-        case 'select':
-          fields.push(field);
-          promiseAll.push(
-            this.$http.get(
-              this.data.requesturl,
-              this.data.requestparam || {},
-              this.data.requestbody || {},
-            ),
-          );
-          break;
-        default:
-      }
-    });
+  created () {
+    this.mainObj = { ...this.value }
+    const promiseAll = []
+    this.fieldCode = this.field.tableName === undefined ? this.field.fieldCode : (`${this.field.tableName}.${this.field.fieldCode}`)
+    const fields = [this.field]
+    switch (this.field.inputType) {
+      case 'combo':
+      case 'radio':
+      case 'select':
+        promiseAll.push(
+          this.$http.get(
+            this.data.requesturl,
+            this.data.requestparam || {},
+            this.data.requestbody || {}
+          )
+        )
+        break
+      default:
+    }
     Promise.all(promiseAll).then((results) => {
       results.forEach((result, index) => {
-        const fld = fields[index];
+        const fld = fields[index]
         if (
-          result[fld.selectedkeymap.resultNodeCode]
-          === fld.selectedkeymap.resultCodeValue
+          result[fld.selectedkeymap.resultNodeCode] ===
+          fld.selectedkeymap.resultCodeValue
         ) {
-          const option = [];
+          const option = []
           if (fld.selectedkeymap.childNodeName) {
             // 取出list的值作为列表
             result[fld.selectedkeymap.parentNodeName][
@@ -305,42 +334,54 @@ export default {
             ].forEach((item) => {
               option.push({
                 label: item[fld.selectedkeymap.labelCode],
-                value: item[fld.selectedkeymap.valueCode],
-              });
-            });
+                value: item[fld.selectedkeymap.valueCode]
+              })
+            })
           } else {
             // 取出list的值作为列表
             result[fld.selectedkeymap.parentNodeName].forEach((item) => {
               option.push({
                 label: item[fld.selectedkeymap.labelCode],
-                value: item[fld.selectedkeymap.valueCode],
-              });
-            });
+                value: item[fld.selectedkeymap.valueCode]
+              })
+            })
           }
-          this.vm.select[fld.dicCode] = option;
+          this.select[fld.dicCode] = option
         }
-      });
-    });
+      })
+    })
   },
   computed: {},
   watch: {
-    value() {
-      this.mainObj = { ...this.value };
-    },
+    value () {
+      this.mainObj = { ...this.value }
+    }
   },
   methods: {
+    // 查询条件展开及收起
+    searchShow ($event) {
+      this.event('toolbar', '工具栏显示隐藏', { eventname: 'showmore', showonerow: this.viewRowSize === 1, ...$event })
+    },
+    // 查询条件展开及收起
+    search ($event) {
+      this.event('toolbar', '查询', { eventname: 'search', ...$event })
+    },
+    // 查询条件展开及收起
+    reset ($event) {
+      this.event('toolbar', '查询重置', { eventname: 'reset', ...$event })
+    },
     /**
      * 值修改时触发
      */
-    valueChange(field, value) {
-      const change = {};
-      change[field.fieldCode] = value;
-      this.event('change', { change });
+    valueChange (field, value) {
+      const change = {}
+      change[this.fieldCode] = value
+      this.event('change', `${field.fieldName}值修改`, { change, from: this.mainObj[this.fieldCode], to: value })
     },
     /**
      * 新增文件时候转换为base64，
      */
-    getFile(file) {
+    getFile (file) {
       this.getBase64(file.raw).then((res) => {
         this.fileList[file.uid] = {
           content: res,
@@ -348,88 +389,88 @@ export default {
             name: file.name,
             size: file.size,
             type: file.raw.type,
-            uid: file.uid,
-          },
-        };
-        this.valueChange({ fieldCode: 'fileList' }, this.filetoList());
-      });
+            uid: file.uid
+          }
+        }
+        this.valueChange({ fieldCode: 'fileList' }, this.filetoList())
+      })
     },
     /**
      * 对象转列表
      */
-    filetoList() {
-      const files = [];
+    filetoList () {
+      const files = []
       Object.keys(this.fileList).forEach((key) => {
-        files.push(this.fileList[key]);
-      });
-      return files;
+        files.push(this.fileList[key])
+      })
+      return files
     },
     /**
      * 文件删除时候调用
      */
-    removeFile(file) {
-      delete this.fileList[file.uid];
+    removeFile (file) {
+      delete this.fileList[file.uid]
       this.valueChange({
         fieldCode: 'fileList',
-        value: this.filetoList(),
-      });
+        value: this.filetoList()
+      })
     },
-    getBase64(file) {
+    getBase64 (file) {
       return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        let imgResult = '';
-        reader.readAsDataURL(file);
+        const reader = new FileReader()
+        let imgResult = ''
+        reader.readAsDataURL(file)
 
         // eslint-disable-next-line func-names
         reader.onload = function () {
-          imgResult = reader.result;
-        };
+          imgResult = reader.result
+        }
         // eslint-disable-next-line func-names
         reader.onerror = function (error) {
-          reject(error);
-        };
+          reject(error)
+        }
         // eslint-disable-next-line func-names
         reader.onloadend = function () {
-          resolve(imgResult);
-        };
-      });
+          resolve(imgResult)
+        }
+      })
     },
     /**
      * 点击标题处理
      */
-    labelClick(field) {
-      this.event('labelclick', { field });
+    labelClick (field) {
+      this.event('labelclick', '点击标题', { field })
     },
     /**
      * 单击输入框处理
      */
-    click(field) {
+    click (field) {
       if (field.inputType === 'table') {
         if (field === undefined || field.readonly === undefined) {
-          this.openDialog(field);
+          this.openDialog(field)
         }
       }
-      this.event('click', { field });
+      this.event('click', '单击', { field })
     },
-    dblclick(field) {
-      this.event('dblClick', { field });
+    dblclick (field) {
+      this.event('dblClick', '双击', { field })
     },
-    blur(field) {
-      this.event('blur', { field });
+    blur (field) {
+      this.event('blur', '失去焦点', { field })
     },
-    focus(field) {
-      this.event('focus', { field, value: this.mainObj, ref: this.$refs.form });
+    focus (field) {
+      this.event('focus', '获得焦点', { field })
     },
-    event(eventname, param) {
+    event (eventname, desc, param) {
       if (param.field === undefined || param.field.readonly === undefined) {
         this.$emit(eventname, {
           eventname,
+          desc,
           ...param,
-          ref: this.$refs.form,
-          value: this.mainObj,
-        });
+          ref: this.$refs.form
+        })
       }
-    },
-  },
-};
+    }
+  }
+}
 </script>

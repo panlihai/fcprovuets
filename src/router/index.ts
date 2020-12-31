@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory, RouteRecordRaw } from 'vue-router'
 import store from '@/store'
 import Layout from '../views/layout/layout.vue'
 const routes: Array<RouteRecordRaw> = [
@@ -17,16 +17,16 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import(/* webpackChunkName: "home" */ '../views/Home.vue')
       },
       {
-        path: '/listinfo',
-        name: 'listinfo',
-        component: () => import(/* webpackChunkName: "listionfo" */ '../components/ad/fcapp.vue')
-      },
-      {
         path: '/cardList',
         name: 'cardList',
         component: () => import(/* webpackChunkName: "cardList" */ '../views/CardList.vue')
       }
     ]
+  },
+  {
+    path: '/listinfo',
+    name: 'listinfo',
+    component: () => import(/* webpackChunkName: "listionfo" */ '../components/ad/table.vue')
   },
   {
     path: '/about',
@@ -47,7 +47,7 @@ const routes: Array<RouteRecordRaw> = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHashHistory(process.env.BASE_URL), // createWebHistory(process.env.BASE_URL),
   routes
 })
 // 路由守卫
@@ -58,7 +58,13 @@ router.beforeEach((to, from, next) => {
     // 是否在登录状态下
     const state: any = store.state
     if (state.system.isLogin) {
-      next()
+      if (to.matched.length === 0) {
+        // 如果未匹配到路由
+        from.path ? next({ path: from.path }) : next('/home')
+        // 如果上级也未匹配到路由则跳转主页面，如果上级能匹配到则转上级路由
+      } else {
+        next()
+      }
     } else {
       next('/login')
     }

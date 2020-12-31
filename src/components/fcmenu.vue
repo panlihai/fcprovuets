@@ -60,8 +60,9 @@
 </template>
 <script lang='ts'>
 import { defineComponent } from 'vue'
-import store from '@/store'
+import { useRouter } from 'vue-router'
 import { mapState } from 'vuex'
+import store from '@/store'
 export interface Menu {
   id?: string;
   menuCode: string;
@@ -76,10 +77,27 @@ export default defineComponent({
       value: (state: any) => state.sysmenus
     })
   },
-  methods: {
-    navigate (menu: any) {
-      this.$router.push({ path: '/listinfo', params: menu })
+  setup () {
+    const router = useRouter()
+    const navigate = (menu: any) => {
+      store.dispatch('system/tabspush', {
+        title: menu.MENUNAME,
+        name: menu.MENUID,
+        content: '',
+        meta: { ...menu }
+      })
+      if (router) {
+        router.push({
+          name: 'listinfo',
+          params: menu
+        })
+      }
     }
+    return {
+      navigate
+    }
+  },
+  methods: {
   }
 })
 </script>

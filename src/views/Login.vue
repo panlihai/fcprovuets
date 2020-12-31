@@ -37,7 +37,6 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import router from '../router'
 import store from '@/store'
 
 export default defineComponent({

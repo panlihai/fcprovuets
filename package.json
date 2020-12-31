@@ -10,7 +10,7 @@
   "dependencies": {
     "babel-eslint": "^10.1.0",
     "bootstrap": "^5.0.0-alpha3",
-    "element-plus": "^1.0.1-beta.8",
+    "element-plus": "^1.0.1-beta.15",
     "node-sass": "^5.0.0",
     "sass-loader": "^10.1.0",
     "vue": "^3.0.0",

@@ -24,14 +24,14 @@ export default {
   props: {
     toolbar: {
       type: Array,
-      default: () => [],
-    },
+      default: () => []
+    }
   },
   methods: {
     // 查询条件展开及收起
-    toolbarEvent(btn) {
-      this.$emit('click', { eventname: btn.btnAct, btn });
-    },
-  },
-};
+    toolbarEvent (btn) {
+      this.$emit('click', { eventname: btn.btnAct, btn, desc: '工具栏事件' })
+    }
+  }
+}
 </script>

@@ -1,4 +1,3 @@
-/* eslint-disable vue/valid-v-for */
 <!--
  * @Description: In User Settings Edit
  * @Author: panlihai
@@ -7,16 +6,13 @@
  * @LastEditors: panlihai
  -->
 <template>
-  <div class="ystable">
-    <el-table :data="vm.tableInfo.data"
-      :style="{height:height + 'px', width: '100%', overflowY:'auto', }"
-      :size="vm.tableInfo.size||'mini'"
+<el-input></el-input>
+  <el-table :data="value"
       current-row-key="ID"
-      :height="height"
       :border="true"
       :highlight-current-row="true"
-      :default-sort="vm.tableInfo.sort||{}"
-      :show-summary="vm.tableInfo.showsummary" :stripe="true" row-key="ID"
+      :default-sort="tableInfo.sort||{}"
+      :show-summary="tableInfo.showsummary" :stripe="true"
       v-loading.fullscreen.lock="isloading"
       element-loading-text="正在加载中..."
       element-loading-spinner="el-icon-loading"
@@ -33,7 +29,7 @@
       @select-all="selectAll"
       @select="selectOne">
       <el-table-column
-        type="selection" v-if="vm.tableInfo.selection"
+        type="selection" v-if="tableInfo.selection"
         width="39">
       </el-table-column>
       <el-table-column
@@ -42,7 +38,7 @@
           :show-summary="false"
           width="45">
       </el-table-column>
-      <el-table-column v-for="(field, index) of vm.tableInfo.infoRow"
+      <el-table-column  v-for="(field, index) of infoRow"
           :key="index"
           label-class-name="header"
           :class-name="field.className||(index===0?'links':'')"
@@ -52,392 +48,233 @@
           :align="field.dicCode?'center':((field.inputType==='long' || field.inputType ==='double')?'right':'left')"
           :sortable="true"
           >
-          <template slot-scope="scope" v-if="vm.tableInfo.editable===true&&field.readonly!==true&&field.disable!==true">
-            <!-- 数值 -->
-              <span v-if="field.isrequired" style="color:red">*</span><el-input-number
-                :clearable="true"
-                v-if="field.inputType === 'long'"
-                v-model="scope.row[field.fieldCode]"
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                :disabled="field.readonly||false"
-                :readonly="field.readonly||false"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              />
-              <el-input-number
-                :clearable="true"
-                v-else-if="field.inputType === 'double'"
-                precision="2"
-                :disabled="field.readonly||false"
-                :readonly="field.readonly||false"
-                v-model="scope.row[field.fieldCode]"
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              />
-              <el-date-picker
-                :clearable="true"
-                v-else-if="field.inputType === 'date'"
-                v-model="scope.row[field.fieldCode]"
-                align="right"
-                type="date"
-                :readonly="field.readonly||false"
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              >
-              </el-date-picker>
-              <el-date-picker
-                :clearable="true"
-                v-else-if="field.inputType === 'datetime'"
-                v-model="scope.row[field.fieldCode]"
-                type="datetime"
-                align="right"
-                :readonly="field.readonly||false"
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              >
-              </el-date-picker>
-              <el-time-select
-                :clearable="true"
-                v-else-if="field.inputType === 'time'"
-                v-model="scope.row[field.fieldCode]"
-                align="right"
-                type="date"
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                :readonly="field.readonly||false"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              >
-              </el-time-select>
-              <!-- 大文本框 -->
-              <el-input
-                :clearable="true"
-                v-else-if="field.inputType === 'textarea'"
-                rows="2"
-                :readonly="field.readonly||false"
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                v-model="scope.row[field.fieldCode]"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              />
-              <!-- 弹出框 -->
-              <el-input
-                :clearable="true"
-                v-else-if="field.inputType === 'table'"
-                prefix-icon="el-icon-search"
-                v-model="scope.row[field.fieldCode]"
-                :disabled="field.readonly||false"
-                readonly
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              ></el-input>
-              <!-- 弹出框 -->
-              <el-input
-                :clearable="true"
-                v-else-if="field.inputType === 'city'"
-                prefix-icon="el-icon-search"
-                v-model="scope.row[field.fieldCode]"
-                :disabled="field.readonly||false"
-                readonly
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              ></el-input>
-              <!-- 选择框 -->
-              <el-select
-                :clearable="true"
-                v-else-if="field.inputType === 'select'"
-                v-model="scope.row[field.fieldCode]"
-                :disabled="field.readonly||false"
-                :readonly="field.readonly||false"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              >
-                <template v-if="field.dicCode">
-                  <el-option
-                    v-for="opt of vm.select[field.dicCode]"
-                    :key="opt.value"
-                    :label="opt.label"
-                    :value="opt.value"
-                  ></el-option>
-                </template>
-              </el-select>
-              <!-- 单选框 -->
-              <el-checkbox
-                :clearable="true"
-                v-else-if="field.inputType === 'check'"
-                v-model="scope.row[field.fieldCode]"
-                :disabled="field.readonly||false"
-                :readonly="field.readonly||false"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              ></el-checkbox>
-              <!-- 多选框 -->
-              <el-checkbox-group
-                :clearable="true"
-                v-else-if="field.inputType === 'checkGroup'"
-                v-model="scope.row[field.fieldCode]"
-                :readonly="field.readonly||false"
-                :disabled="field.readonly||false"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-              >
-                <template v-if="field.dicCode">
-                  <el-checkbox
-                    v-for="opt of vm.select[field.dicCode]"
-                    :key="opt.value"
-                    :label="opt.value"
-                    >{{ opt.label }}</el-checkbox
-                  >
-                </template>
-              </el-checkbox-group>
-              <el-upload
-                v-else-if="field.inputType === 'uploadfile'"
-                class="avatar-uploader"
-                action=""
-                :show-file-list="true"
-                :auto-upload="false"
-                :readonly="field.readonly||false"
-                :disabled="field.readonly||false"
-                :on-change="getFile"
-                :on-remove="removeFile"
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-                >
-                <i class="el-icon-plus avatar-uploader-icon"></i>
-              </el-upload>
-              <label v-text="scope.row[field.fieldCode]" v-else-if="field.inputType === 'label'" />
-              <!-- 文本框 -->
-              <el-input
-                :clearable="true"
-                v-else
-                :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-                v-model="scope.row[field.fieldCode]"
-                @click.native="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
-                @dblclick.native="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
-                @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
-                :readonly="field.readonly||false"
-                @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
-                @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)"
-              />
+          <template v-slot="scope" v-if="field.editable===true&&field.readonly!==true&&field.disable!==true">
+            <fcbasefield :field="field" :value="scope.row" placeholder=""
+              @click="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
+              @dblclick="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
+              @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
+              @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
+              @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)">
+            </fcbasefield>
           </template>
       </el-table-column>
       <el-table-column
-        v-if="vm.tableInfo.hasaction === true && vm.tableInfo.lineToolbar"
+        v-if="tableInfo.hasaction === true && tableInfo.lineToolbar"
         class-name="operate-temp"
         prop="action"
-        :label="$t('操作')"
+        label="操作"
         width="100">
-        <template slot-scope="{row, $index, column}">
+        <template v-slot="{row, $index, column}">
           <el-button
-            v-for="(btn, btnindex) of vm.tableInfo.lineToolbar" :key="btnindex"
-            :size="vm.tableInfo.size"
+            v-for="(btn, btnindex) of tableInfo.lineToolbar" :key="btnindex"
+            :size="tableInfo.size"
             type="text"
-            :disabled="!!(vm.tableInfo.editDisabled && vm.tableInfo.editDisabled(row))"
-            @click.native.stop="toolbar(row, $index, column, btn)">
-            {{$t(btn.btnName)}}
+            :disabled="!!(tableInfo.editDisabled && tableInfo.editDisabled(row))"
+            @click.stop="toolbar(row, $index, column, btn)">
+            {{btn.btnName}}
           </el-button>
         </template>
       </el-table-column>
-    </el-table>
-    <el-pagination v-if="vm.tableInfo.pagination==='in'"
-      @size-change="sizeChange"
-      @current-change="pageChange"
-      @prev-click="prevPage"
-      @next-click="nextPage"
-      :current-page="vm.tableInfo.pageNum"
-      :page-sizes="[20, 50, 100, 200, 300, 500, 1000]"
-      :page-size="vm.tableInfo.pageSize"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="vm.tableInfo.totalSize">
-    </el-pagination>
-  </div>
+  </el-table>
 </template>
 <script>
-import ViewModel from './list-form';
+import ViewModel from './list-form'
+import fcbasefield from './field'
+import store from '@/store'
+import { useRoute } from 'vue-router'
+import Model from '@/api/model'
 
 export default {
   name: 'fctable',
+  components: { fcbasefield },
   props: {
-    model: {
-      type: Object,
-      default: () => {},
-    },
-    isloading: {
-      type: Boolean,
-      default: () => false,
-    },
     height: {
       type: Number,
-      default: () => document.body.clientHeight - 169 - 47,
-    },
+      default: () => document.body.clientHeight - 169 - 47
+    }
   },
-  data() {
+  data () {
     return {
-      vm: { ...ViewModel, ...this.model },
-      select: { ...ViewModel.select },
-    };
+      infoRow: [],
+      value: [],
+      tableInfo: {}
+    }
   },
-  created() {
-    this.vm.initTableModel(this.vm.tableInfo, this.vm.fields, true, false);
-  },
-  computed: { },
   watch: {
-    model() {
-    },
-    value() {
-    },
+    // tableInfo: {
+    //   handler () {
+    //     this.init()
+    //   },
+    //   deep: true,
+    //   immediate: true
+    // }
+    fields: {
+      handler () {
+        this.infoRow = [this.fields]
+      }
+    }
+  },
+  created () {
+    window.onresize = () => {
+      // this.height = document.body.clientHeight - 169 - 47
+    }
+    this.appId = useRoute().params.APPID
+    // store.dispatch('model/initapp', { AID: this.appId, PID: this.system.pid }).then(() => {
+    //   this.appModel = this.app[this.appId]
+    //   this.init()
+    // })
+    this.init()
   },
   methods: {
-    toolbar(value, $index, column, btn) {
+    init () {
+      this.isLoading = false
+      this.value = []
+      if (this.tableInfo === undefined) {
+        return
+      }
+      store.dispatch('model/query', {
+        AID: this.appId,
+        PAGENUM: this.tableInfo.pageNum || 1,
+        PAGESIZE: this.tableInfo.pageSize || 20
+      }).then((result) => {
+        this.tableInfo = Model.toTable(result.MODEL)
+        this.infoRow = ViewModel.initTableModel(this.tableInfo)
+        result.DATA.forEach((d, index) => {
+          d.rownum = index + 1
+        })
+        this.value = [...result.DATA]
+        this.tableInfo.totalSize = result.TOTALSIZE
+      }).catch((result) => {
+        console.log(result)
+      }).finally(() => {
+        this.isLoading = false
+      })
+    },
+    toolbar (value, $index, column, btn) {
       this.event('toolbar', {
-        eventname: btn.btnAct, index: $index, btn, value,
-      });
+        eventname: btn.btnAct, index: $index, btn, value
+      })
     },
-    rowclick(value, row, event) {
+    rowclick (value, row, event) {
       this.event('rowclick', {
-        value, row, event, field: this.vm.fields[row.property],
-      });
+        value, row, event, field: this.tableInfo.fields[row.property]
+      })
     },
-    rowdblclick(value, row, event) {
+    rowdblclick (value, row, event) {
       this.event('rowdblclick', {
-        value, row, event, field: this.vm.fields[row.property],
-      });
+        value, row, event, field: this.tableInfo.fields[row.property]
+      })
     },
     /**
      * 点击cell时触发，当点击链接时，触发另外一个事件
      */
-    cellclick(value, row, cell, event) {
-      const field = this.vm.fields[row.property];
+    cellclick (value, row, cell, event) {
+      const field = this.tableInfo.fields[row.property]
       this.event('cellclick', {
-        value, row, cell, event, field,
-      });
+        value, row, cell, event, field
+      })
       // 当是链接字段，同时不可编辑的时候 或者 为只读 为禁用的时候可点击打开链接
-      if (row.className === 'links' && this.vm.tableInfo.editable !== true || field.readonly === true || field.disabled === true) {
+      if (row.className === 'links' && (this.tableInfo.editable !== true || field.readonly === true || field.disabled === true)) {
         this.event('linkclick', {
-          value, row, cell, event, field,
-        });
+          value, row, cell, event, field
+        })
       }
     },
-    celldblclick(value, row, cell, event) {
+    celldblclick (value, row, cell, event) {
       this.event('celldblclick', {
-        value, row, cell, event, field: this.vm.fields[row.property],
-      });
+        value, row, cell, event, field: this.tableInfo[row.property]
+      })
     },
-    sortChange(sortObj) {
-      this.event('sortchange', { cell: sortObj.column, order: sortObj.order, field: this.vm.fields[sortObj.prop] });
+    sortChange (sortObj) {
+      this.event('sortchange', { cell: sortObj.column, order: sortObj.order, field: this.tableInfo.fields[sortObj.prop] })
     },
     /**
      * 标题点击
      */
-    headerClick(row, event) {
-      this.event('headerclick', { row, event, field: this.vm.fields[row.property] });
+    headerClick (row, event) {
+      this.event('headerclick', { row, event, field: this.tableInfo.fields[row.property] })
     },
     /**
      * 行右键
      */
-    rowContextmenu(value, row, event) {
+    rowContextmenu (value, row, event) {
       this.event('rowcontextmenu', {
-        value, row, event, field: this.vm.fields[row.property],
-      });
+        value, row, event, field: this.tableInfo.fields[row.property]
+      })
     },
     /**
      * 标题右键
      */
-    headerContextmenu(row, event) {
-      this.event('headercontextmenu', { row, event, field: this.vm.fields[row.property] });
+    headerContextmenu (row, event) {
+      this.event('headercontextmenu', { row, event, field: this.tableInfo.fields[row.property] })
     },
-    selectionChange(value) {
-      this.event('selectionchange', { value });
+    selectionChange (value) {
+      this.event('selectionchange', { value })
     },
     /**
      * 全选事件
      */
-    selectAll(value) {
-      this.event('selectall', { value });
+    selectAll (value) {
+      this.event('selectall', { value })
     },
     /**
      * 单选一行
      */
-    selectOne(row, value) {
-      this.event('select', { value });
+    selectOne (row, value) {
+      this.event('select', { value })
     },
     /**
      * 分页大小改变时,跳转到第一页
      */
-    sizeChange(pageSize) {
-      this.vm.tableInfo.pageSize = pageSize;
+    sizeChange (pageSize) {
+      // eslint-disable-next-line vue/no-mutating-props
+      this.tableInfo.pageSize = pageSize
       this.event('pagechange', {
         eventname: 'pagesizeChange',
         name: '页偏移量改变',
         pageSize,
-        pageNum: 1,
-      });
+        pageNum: 1
+      })
     },
     /**
      * 页数改变时
      */
-    pageChange(pageNum) {
-      this.vm.tableInfo.pageNum = pageNum;
+    pageChange (pageNum) {
+      // eslint-disable-next-line vue/no-mutating-props
+      this.tableInfo.pageNum = pageNum
       this.event('pagechange', {
         eventname: 'pagenumChange',
         name: '页数改变',
         pageNum,
-        pageSize: this.vm.tableInfo.pageSize,
-      });
+        pageSize: this.tableInfo.pageSize
+      })
     },
     /**
      * 上一页
      */
-    prevPage(pageNum) {
+    prevPage (pageNum) {
       this.event('pagechange', {
         eventname: 'pagenumChange',
         name: '页数改变',
         pageNum,
-        pageSize: this.vm.tableInfo.pageSize,
-      });
+        pageSize: this.tableInfo.pageSize
+      })
     },
     /**
      * 下一页
      */
-    nextPage(pageNum) {
+    nextPage (pageNum) {
       this.event('pagechange', {
         eventname: 'pagenumChange',
         name: '页数改变',
         pageNum,
-        pageSize: this.vm.tableInfo.pageSize,
-      });
+        pageSize: this.tableInfo.pageSize
+      })
     },
     /**
      * 新增文件时候转换为base64，
      */
-    getFile(file) {
+    getFile (file) {
       this.getBase64(file.raw).then((res) => {
         this.fileList[file.uid] = {
           content: res,
@@ -445,91 +282,96 @@ export default {
             name: file.name,
             size: file.size,
             type: file.raw.type,
-            uid: file.uid,
-          },
-        };
-        this.valueChange({ fieldCode: 'fileList' }, this.filetoList());
-      });
+            uid: file.uid
+          }
+        }
+        this.valueChange({ fieldCode: 'fileList' }, this.filetoList())
+      })
     },
     /**
      * 对象转列表
      */
-    filetoList() {
-      const files = [];
+    filetoList () {
+      const files = []
       Object.keys(this.fileList).forEach((key) => {
-        files.push(this.fileList[key]);
-      });
-      return files;
+        files.push(this.fileList[key])
+      })
+      return files
     },
     /**
      * 文件删除时候调用
      */
-    removeFile(file) {
-      delete this.fileList[file.uid];
+    removeFile (file) {
+      delete this.fileList[file.uid]
       this.valueChange({
         fieldCode: 'fileList',
-        value: this.filetoList(),
-      });
+        value: this.filetoList()
+      })
     },
-    getBase64(file) {
-      return new Promise(((resolve, reject) => {
-        const reader = new FileReader();
-        let imgResult = '';
-        reader.readAsDataURL(file);
+    getBase64 (file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        let imgResult = ''
+        reader.readAsDataURL(file)
 
         // eslint-disable-next-line func-names
         reader.onload = function () {
-          imgResult = reader.result;
-        };
+          imgResult = reader.result
+        }
         // eslint-disable-next-line func-names
         reader.onerror = function (error) {
-          reject(error);
-        };
+          reject(error)
+        }
         // eslint-disable-next-line func-names
         reader.onloadend = function () {
-          resolve(imgResult);
-        };
-      }));
+          resolve(imgResult)
+        }
+      })
     },
-    fieldClick(data, field, index, column, $event) {
+    fieldClick (data, field, index, column, $event) {
       this.event('click', {
-        field, data, index, column, $event,
-      });
+        field, data, index, column, $event
+      })
     },
-    fieldDblclick(data, field, index, column, $event) {
+    fieldDblclick (data, field, index, column, $event) {
       this.event('dblClick', {
-        field, data, index, column, $event,
-      });
+        field, data, index, column, $event
+      })
     },
-    fieldBlur(data, field, index, column, $event) {
+    fieldBlur (data, field, index, column, $event) {
       this.event('blur', {
-        field, data, index, column, $event,
-      });
+        field, data, index, column, $event
+      })
     },
-    fieldFocus(data, field, index, column, $event) {
+    fieldFocus (data, field, index, column, $event) {
       this.event('focus', {
-        field, data, index, column, $event,
-      });
+        field, data, index, column, $event
+      })
     },
-    fieldValueChange(data, field, index, column, $event) {
+    fieldValueChange (data, field, index, column, $event) {
+      data = { ...data, ...$event.change }
+      const fieldCode = field.tableName === undefined ? field.fieldCode : `${field.tableName}.${field.fieldCode}`
+      // eslint-disable-next-line vue/no-mutating-props
+      this.value[index][fieldCode] = $event.change[fieldCode]
       this.event('change', {
-        data, field, index, column, $event,
-      });
+        data, field, index, column, $event
+      })
     },
-    event(eventname, param) {
-      this.$emit(eventname, { eventname, ...param });
-    },
-  },
-};
+    event (eventname, param) {
+      const grp = this.tableInfo
+      this.$emit(eventname, { eventname, ...param, grp })
+    }
+  }
+}
 </script>
 
 <style lang="scss">
 .el-pagination {
   text-align: center;
 }
-.ystable {
+.fctable {
   overflow-y: auto;
-  // height: calc(100% - 300px);
+  height: calc(100% - 300px);
 }
 .links {
   color:#2440B3;

@@ -7,27 +7,7 @@
  -->
 <template>
   <div class="app">
-    <div class="search">
-      <fcsearch :searchInfo="searchInfo" :value="searchObj" @toolbar="queryToolbar" @change="queryToolbar"></fcsearch>
-    </div>
-    <div class="toolbar">
-      <fctoolbar @click="toolbar" :toolbar="tableInfo.toolbar"></fctoolbar>
-    </div>
     <div class="table" :style="{height:height+'px'}">
-      <div class="tree" v-if="false">
-        <div  v-for="(field, index) of tableInfo.fields" :key="index">
-          <template v-if="field.dicCode!==null">
-            <label :text="field.fieldName"></label>
-            <el-tree
-              :props="props"
-              :load="loadNode"
-              lazy
-              show-checkbox
-              @check-change="handleCheckChange">
-            </el-tree>
-          </template>
-        </div>
-      </div>
       <div class="content">
         <fctable :tableInfo="tableInfo" :fields="tableFields" :height="height" :isloading="isLoading"
           :value="this.value" @toolbar="tableToolbar" @cellclick="tableCellClick"
@@ -37,76 +17,12 @@
           @select="tableSelectOne" @pagechange="tablePageChange" @linkclick="tableLinkClick" @change="tableFieldValueChange"></fctable>
       </div>
     </div>
-    <div class="footer">
-      <el-pagination v-if="tableInfo.pagination==='out'"
-        @size-change="pageSizeChange"
-        @current-change="pageNumChange"
-        @prev-click="prevPage"
-        @next-click="nextPage"
-        :current-page="tableInfo.pageNum"
-        :page-sizes="[20, 50, 100, 200, 300, 500, 1000]"
-        :page-size="tableInfo.pageSize"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="tableInfo.totalSize">
-      </el-pagination>
-    </div>
-    <el-dialog v-dialogDrag fullscreen :title="formInfo.title" :visible="formShow===true" width="100%" height="100%" :before-close="formClose">
-      <fcform v-if="formShow===true" :formInfo="formInfo" :value="selectedObj"
-        @grouptoolbar="formGroupToolbar" @toolbar="formToolbar"
-        @labelclick="formFieldLabelClick" @click="formFieldClick" @tabletoolbar="formTableToolbar"
-        @blur="formFieldBlur" @focus="formFieldFocus" @change="formFieldValueChange"
-        @tablecellclick="formTableCellClick" @tablecelldblclick="formTableCellDblClick" @tablerowclick="formTableRowClick"
-        @tablerowdblclick="formTableRowDblClick" @tablesortchange="formTableSortChange" @tableheaderclick="formTableHeaderClick"
-        @tablerowcontextmenu="formTableRowContextmenu" @tableheadercontextmenu="formTableHeaderContextmenu"
-        @tableselectionchange="formTableSelectionChange" @selectall="formTableSelectAll"
-        @tableselect="formTableSelectOne" @tablepagechange="formTablePageChange"
-        @tablelinkclick="formTableLinkClick" @tablefieldclick="formTableFieldClick"
-        @tablefieldblur="formTableFieldBlur" @tablefieldfocus="formTableFieldFocus" @tablefieldchange="formTableFieldValueChange"
-      >
-        <template #baseform>
-          <slot name="baseform"></slot>
-        </template>
-      </fcform>
-      <template #footer>
-        <fctoolbar
-          @click="formToolbar($event.btn)"
-          :toolbar="formInfo.toolbar"
-        ></fctoolbar>
-      </template>
-    </el-dialog>
-    <el-dialog fullscreen v-dialogDrag :title="viewInfo.title" :visible="viewShow===true" width="100%" :before-close="viewClose">
-      <fcview v-if="viewShow===true" :formInfo="viewInfo" :value="selectedObj"
-        @grouptoolbar="formGroupToolbar" @toolbar="viewToolbar"
-        @labelclick="formFieldLabelClick" @click="formFieldClick" @tabletoolbar="formTableToolbar"
-        @blur="formFieldBlur" @focus="formFieldFocus" @change="formFieldValueChange"
-        @tablecellclick="formTableCellClick" @tablecelldblclick="formTableCellDblClick" @tablerowclick="formTableRowClick"
-        @tablerowdblclick="formTableRowDblClick" @tablesortchange="formTableSortChange" @tableheaderclick="formTableHeaderClick"
-        @tablerowcontextmenu="formTableRowContextmenu" @tableheadercontextmenu="formTableHeaderContextmenu"
-        @tableselectionchange="formTableSelectionChange" @selectall="formTableSelectAll"
-        @tableselect="formTableSelectOne" @tablepagechange="formTablePageChange"
-        @tablelinkclick="formTableLinkClick" @tablefieldclick="formTableFieldClick"
-        @tablefieldblur="formTableFieldBlur" @tablefieldfocus="formTableFieldFocus" @tablefieldchange="formTableFieldValueChange">
-        <template #childView>
-          <slot name="childView"></slot>
-        </template>
-      </fcview>
-      <template #footer>
-        <fctoolbar
-          @click="viewToolbar($event.btn)"
-          :toolbar="viewInfo.toolbar"
-        ></fctoolbar>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
 import ViewModel from './list-form'
-import fcform from './form'
-import fctoolbar from './toolbar'
-import fcview from './view'
-import fcsearch from './search'
 import fctable from './table'
 import store from '@/store'
 import { useRoute } from 'vue-router'
@@ -121,27 +37,7 @@ const queryevent = 'queryevent'
 export default {
   name: 'fcapp',
   components: {
-    fcform,
-    fcview,
-    fcsearch,
-    fctable,
-    fctoolbar
-  },
-  props: {
-    model: {
-      type: Object,
-      default: () => ({
-        formInfo: {
-          formShow: false
-        },
-        viewInfo: {
-          formShow: false
-        },
-        tableInfo: {
-          pageNum: 1, pageSize: 20
-        }
-      })
-    }
+    fctable
   },
   data () {
     return {
@@ -193,19 +89,6 @@ export default {
   },
   methods: {
     init () {
-      if (this.model.formInfo) {
-        this.formShow = this.model.formInfo.formShow || false
-      }
-      if (this.model.viewInfo) {
-        this.viewShow = this.model.viewInfo.formShow || false
-      }
-      this.appModel = { ...this.model }
-      // eslint-disable-next-line vue/no-mutating-props
-      this.formInfo = { ...this.appModel.formInfo }
-      // eslint-disable-next-line vue/no-mutating-props
-      this.viewInfo = { ...this.appModel.viewInfo }
-      this.tableInfo = { ...this.appModel.tableInfo }
-      this.searchInfo = { ...this.appModel.searchInfo }
       this.query()
     },
     /**
@@ -223,13 +106,8 @@ export default {
         PAGENUM: this.tableInfo.pageNum || 1,
         PAGESIZE: this.tableInfo.pageSize || 20
       }).then((result) => {
-        // store.dispatch('model/setApp', result.MODEL).then(() => {
-        this.formInfo = { ...this.appModel.formInfo }
-        // eslint-disable-next-line vue/no-mutating-props
-        this.viewInfo = { ...this.appModel.viewInfo }
         this.tableInfo = Model.toTable(result.MODEL)
         this.tableFields = ViewModel.initTableModel(this.tableInfo)
-        this.searchInfo = { ...this.appModel.searchInfo }
         result.DATA.forEach((d, index) => {
           d.rownum = index + 1
         })
