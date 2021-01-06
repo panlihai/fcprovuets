@@ -1619,6 +1619,91 @@ const fields = {
     inputType: 'datetime'
   }
 }
+// /**
+//  * 事件集合
+//  */
+// const methods = {
+//   /**
+//    * 查询方法
+//    * 利用查询条件（searchObj对象）及分页条件（pagination对象）拼装条件查询后端
+//    */
+//   query() {
+//     this.isLoading = true;
+//     this.value = [];
+//     this.$http.get(`/server/api/SYSTEM/SYSMODEL/listinfo?AID=SYSAPP&PAGENUM=${this.vm.tableInfo.pageNum}&PAGESIZE=${this.vm.tableInfo.pageSize}`).then((result) => {
+//       result.DATA.forEach((d, index) => {
+//         this.value.push({
+//           ...d, rownum: index + 1,
+//         });
+//       });
+//       this.vm.tableInfo.totalSize = result.TOTALSIZE;
+//     }).catch((result) => {
+//       result.DATA.forEach((d, index) => {
+//         this.value.push({
+//           ...d, rownum: index + 1,
+//         });
+//       });
+//       this.vm.tableInfo.totalSize = result.TOTALSIZE;
+//     }).finally(() => {
+//       this.isLoading = false;
+//     });
+//   },
+//   /**
+//    * 删除操作之前的处理，可校验是否可以删除，返回ture进行下一步，返回false则放弃
+//    */
+//   beforeDelete() {
+//     return new Promise((resolve, reject) => {
+//       this.$http.get(`/server/api/SYSTEM/SYSMODEL/listinfo?AID=SYSAPP&PAGENUM=${this.vm.tableInfo.pageNum}&PAGESIZE=${this.vm.tableInfo.pageSize}`).then(() => {
+//         resolve(true);
+//       }).catch(() => {
+//         reject();
+//       });
+//     });
+//   },
+//   /**
+//    * 删除操作
+//    * @param {*} delObjs 删除多个对象
+//    */
+//   delete(delObjs) {
+//     return new Promise((resolve) => {
+//       resolve(delObjs);
+//     });
+//   },
+//   /**
+//    * 删除之后执行自定义操作
+//    */
+//   afterDelete() {
+//   },
+//   /**
+//    * 点击编辑按钮后，打开弹窗前执行的操作，在此可以校验是否可以编辑，返回ture进行下一步，返回false则放弃
+//    * 自定义校验规则
+//    * 数据对象为this.selectObj
+//    */
+//   beforeEdit() {
+//     return new Promise((resolve) => {
+//       resolve({});
+//     });
+//   },
+//   /**
+//    * 点击保存之前的操作，可以做校验，调整数据内容，返回ture则可以提交保存，返回false则放弃保存
+//    * 数据对象为this.selectObj
+//    */
+//   beforeSave() {
+//   },
+//   /**
+//    * 保存操作，此操作执行完后将执行方法this.query()
+//    */
+//   save() {
+//     return new Promise((resolve) => {
+//       resolve({});
+//     });
+//   },
+//   /**
+//    * 保存完成后执行的操作，不论是否成功都将执行
+//    */
+//   afterSave() {
+//   },
+// };
 /**
  * 获取列
  * @param {*} cols 列
@@ -1642,7 +1727,7 @@ function initSearchModel (group = {}, isOpen) {
   let cols = []
   let columns = 0
   const span = 24 / (group.columnSize || 3)
-  if (group && group.fields) {
+  if (group.fields) {
     group.fields.forEach((field) => {
       // 第一行末尾 先加入查询及重置按钮，在新的一行加入当前遍历字段
       if (isOpen === false && columns === group.columnSize - 1 && row.length === 0) {
@@ -1662,12 +1747,14 @@ function initSearchModel (group = {}, isOpen) {
       }
       cols.push({ ...group.fields[field.fieldCode], ...field })
     })
-    // 判断是否只有一行
-    for (let i = cols.length; i < group.columnSize; i++) {
-      if (group.columnSize - 1 !== cols.length) {
-        cols.push({ inputType: 'space', span })
-      } else {
-        cols.push({ inputType: 'searchBtn', span })
+    if (isOpen === false) {
+      // 判断是否只有一行
+      for (let i = cols.length; i < group.columnSize; i++) {
+        if (group.columnSize - 1 !== cols.length) {
+          cols.push({ inputType: 'space', span })
+        } else {
+          cols.push({ inputType: 'searchBtn', span })
+        }
       }
     }
     // 最后一行加入到行集合中
@@ -1698,8 +1785,8 @@ function initSearchModel (group = {}, isOpen) {
         cols.push({ inputType: 'searchBtn', span })
       }
     }
-    group.infoRow = row
   }
+  return row
 }
 /**
  * 获取表单的行列
@@ -1709,141 +1796,9 @@ function initFormOneModel (group = {}) {
   const row = []
   let cols = []
   let columns = 0
-  if (group && group.fldGroup) {
-    group.fldGroup[0].fields.forEach((field) => {
-      // 隐藏字段配置中如果没有属性或属性值为false的时候显示该字段
-      if (group.hiddenFields[field.fieldCode] === undefined || group.hiddenFields[field.fieldCode] === false) {
-        if (getCols(columns, field, group) === false) {
-          if (cols.length !== 0) {
-            row.push([...cols])
-            cols = []
-          }
-          columns = field.column || 1
-        } else {
-          columns += field.column || 1
-        }
-        // 当字段配置进行移动后会导致找不到物理表字段则从子表中查找
-        if (group.fields[field.fieldCode] === undefined) {
-          if (group.children && group.children[0]) {
-            cols.push({
-              ...group.children[0].fields[field.fieldCode],
-              ...field,
-              ...group.requiredFields[field.fieldCode], // 覆盖必填
-              ...group.readonlyFields[field.fieldCode] // 覆盖只读
-            })
-          }
-        } else {
-          cols.push({
-            ...group.fields[field.fieldCode],
-            ...field,
-            ...group.requiredFields[field.fieldCode], // 覆盖必填
-            ...group.readonlyFields[field.fieldCode] // 覆盖只读
-          })
-        }
-      }
-    })
-    if (cols.length !== 0) {
-      row.push(cols)
-    }
-  }
-  return row
-}
-/**
- * 获取表单的校验规则
- * @param {*} group 表单模型
- */
-function initRuleOneModel (group = {}) {
-  const rules = {}
-  if (group && group.fldGroup) {
-    group.fldGroup[0].fields.forEach((field) => {
-      // 必填
-      const f = { ...field, ...group.requiredFields[field.fieldCode] }
-      const rule = []
-      switch (f.inputType) {
-        case 'date':
-        case 'datetime':
-        case 'time':
-        case 'datepicker':
-        case 'datetimepicker':
-        case 'timepicker':
-          if (f.isrequired === true) {
-            rule.push({
-              type: 'date', required: true, message: `${f.fieldName}不能为空`, trigger: 'change'
-            })
-          }
-          let mRule = {}
-          if (f.maxlength && f.maxlength !== 0) {
-            mRule = {
-              max: true, message: `最长不能超过${f.length}`, trigger: 'change'
-            }
-          }
-          if (f.minlength && f.minlength !== 0) {
-            if (mRule.max === true) {
-              mRule = { ...mRule, min: f.minlength, message: `${f.fieldName}长度需介于${f.minlength}，${f.maxlength}之间` }
-            } else {
-              mRule = {
-                min: true, message: `最短不能小于${f.minlength}`, trigger: 'change'
-              }
-            }
-          }
-          if (mRule.min === true || mRule === true) {
-            rule.push(mRule)
-          }
-          break
-        case 'combo':
-        case 'radio':
-        case 'chosen':
-        case 'component':
-        case 'table':
-        case 'check':
-        case 'checkbox':
-        case 'upload':
-          rule.push({
-            type: 'array', required: true, message: `${f.fieldName}不能为空`, trigger: 'change'
-          })
-          break
-        default:
-          if (f.isrequired === true) {
-            rule.push({
-              required: true, message: `${f.fieldName}不能为空`, trigger: 'change'
-            })
-          }
-          let mRule0 = {}
-          if (f.maxlength && f.maxlength !== 0) {
-            mRule0 = {
-              max: true, message: `最长不能超过${f.length}`, trigger: 'change'
-            }
-          }
-          if (f.minlength && f.minlength !== 0) {
-            if (mRule0.max === true) {
-              mRule0 = { ...mRule, min: f.minlength, message: `${f.fieldName}长度需介于${f.minlength}，${f.maxlength}之间` }
-            } else {
-              mRule0 = {
-                min: true, message: `最短不能小于${f.minlength}`, trigger: 'change'
-              }
-            }
-          }
-          if (mRule0.min === true || mRule0 === true) {
-            rule.push(mRule0)
-          }
-      }
-      if (rule.length !== 0) {
-        rules[f.fieldCode] = rule
-      }
-    })
-  }
-  return rules
-}
-/**
- * 获取浏览表单的行列
- * @param {*} group 表单模型
- */
-function initViewOneModel (group = {}) {
-  const row = []
-  let cols = []
-  let columns = 0
-  if (group && group.fldGroup) {
-    group.fldGroup[0].fields.forEach((field) => {
+  group.fldGroup[0].fields.forEach((field) => {
+    // 隐藏字段配置中如果没有属性或属性值为false的时候显示该字段
+    if (group.hiddenFields[field.fieldCode] === undefined || group.hiddenFields[field.fieldCode] === false) {
       if (getCols(columns, field, group) === false) {
         if (cols.length !== 0) {
           row.push([...cols])
@@ -1859,20 +1814,152 @@ function initViewOneModel (group = {}) {
           cols.push({
             ...group.children[0].fields[field.fieldCode],
             ...field,
-            inputType: 'label'
+            ...group.requiredFields[field.fieldCode], // 覆盖必填
+            ...group.readonlyFields[field.fieldCode] // 覆盖只读
           })
         }
       } else {
         cols.push({
           ...group.fields[field.fieldCode],
           ...field,
-          inputType: 'label'
+          ...group.requiredFields[field.fieldCode], // 覆盖必填
+          ...group.readonlyFields[field.fieldCode] // 覆盖只读
         })
       }
-    })
-    if (cols.length !== 0) {
-      row.push(cols)
     }
+  })
+  if (cols.length !== 0) {
+    row.push(cols)
+  }
+  return row
+}
+/**
+ * 获取表单的校验规则
+ * @param {*} group 表单模型
+ */
+function initRuleOneModel (group = {}) {
+  const rules = {}
+  group.fldGroup[0].fields.forEach((field) => {
+    // 必填
+    const f = { ...group.fields[field.fieldCode], ...field, ...group.requiredFields[field.fieldCode] }
+    const rule = []
+    switch (f.inputType) {
+      case 'date':
+      case 'datetime':
+      case 'time':
+      case 'datepicker':
+      case 'datetimepicker':
+      case 'timepicker':
+        if (f.isrequired === true) {
+          rule.push({
+            type: 'date', required: true, message: `${f.fieldName}不能为空`, trigger: 'change'
+          })
+        }
+        let mRule = {}
+        if (f.maxlength && f.maxlength !== 0) {
+          mRule = {
+            max: true, message: `最长不能超过${f.length}`, trigger: 'change'
+          }
+        }
+        if (f.minlength && f.minlength !== 0) {
+          if (mRule.max === true) {
+            mRule = { ...mRule, min: f.minlength, message: `${f.fieldName}长度需介于${f.minlength}，${f.maxlength}之间` }
+          } else {
+            mRule = {
+              min: true, message: `最短不能小于${f.minlength}`, trigger: 'change'
+            }
+          }
+        }
+        if (mRule.min === true || mRule === true) {
+          rule.push(mRule)
+        }
+        break
+      case 'combo':
+      case 'radio':
+      case 'chosen':
+      case 'component':
+      case 'table':
+      case 'check':
+      case 'checkbox':
+      case 'upload':
+        rule.push({
+          type: 'array', required: true, message: `${f.fieldName}不能为空`, trigger: 'change'
+        })
+        break
+      default:
+        if (f.isrequired === true) {
+          rule.push({
+            required: true, message: `${f.fieldName}不能为空`, trigger: 'blur'
+          })
+        }
+        let mRule0 = {}
+        if (f.maxlength && f.maxlength !== 0) {
+          mRule0 = {
+            max: true, message: `最长不能超过${f.length}`, trigger: 'blur'
+          }
+        }
+        if (f.minlength && f.minlength !== 0) {
+          if (mRule0.max === true) {
+            mRule0 = { ...mRule, min: f.minlength, message: `${f.fieldName}长度需介于${f.minlength}，${f.maxlength}之间` }
+          } else {
+            mRule0 = {
+              min: true, message: `最短不能小于${f.minlength}`, trigger: 'blur'
+            }
+          }
+        }
+        if (mRule0.min === true || mRule0 === true) {
+          rule.push(mRule0)
+        }
+    }
+    if (rule.length !== 0) {
+      rules[`${f.tableName}___${f.fieldCode}`] = rule
+    }
+  })
+  return rules
+}
+/**
+ * 获取浏览表单的行列
+ * @param {*} group 表单模型
+ */
+function initViewOneModel (group = {}) {
+  const row = []
+  let cols = []
+  let columns = 0
+  group.fldGroup[0].fields.forEach((field) => {
+    if (getCols(columns, field, group) === false) {
+      if (cols.length !== 0) {
+        row.push([...cols])
+        cols = []
+      }
+      columns = field.column || 1
+    } else {
+      columns += field.column || 1
+    }
+    // 当字段配置进行移动后会导致找不到物理表字段则从子表中查找
+    if (group.fields[field.fieldCode] === undefined) {
+      if (group.children && group.children[0]) {
+        cols.push({
+          ...group.children[0].fields[field.fieldCode],
+          ...field,
+          placeholder: '',
+          isrequired: false,
+          readonly: true,
+          disabled: false
+        })
+      }
+    } else {
+      cols.push({
+        ...group.fields[field.fieldCode],
+        ...field,
+        placeholder: '',
+        isrequired: false,
+        readonly: true,
+        disabled: false
+      })
+    }
+  })
+  if (cols.length !== 0) {
+    row.push(cols)
   }
   return row
 }
@@ -1883,11 +1970,9 @@ function initViewOneModel (group = {}) {
 function initTableOneModel (group = {}) {
   const row = []
   const cols = []
-  if (group && group.fldGroup) {
-    group.fldGroup[0].fields.forEach((field) => {
-      cols.push({ ...group.fields[field.fieldCode] })
-    })
-  }
+  group.fldGroup[0].fields.forEach((field) => {
+    cols.push({ ...group.fields[field.fieldCode] })
+  })
   if (cols.length !== 0) {
     row.push(cols)
   }
@@ -1898,7 +1983,7 @@ function initTableOneModel (group = {}) {
  * @param {*} group 查看模型
  */
 function initFormModel (group = {}) {
-  if (group && group.viewType === 'form') {
+  if (group.viewType === 'form') {
     // 获取只读字段
     const readonlyFields = {}
     if (group.readonlyFieldCodes) {
@@ -1960,7 +2045,7 @@ function initFormModel (group = {}) {
  * @param {*} group 模型
  */
 function initRuleModel (group = {}) {
-  if (group && group.viewType === 'form') {
+  if (group.viewType === 'form') {
     group.ruleInfo = initRuleOneModel(group)
     if (group.children) {
       group.children.forEach((cgroup) => {
@@ -1976,7 +2061,7 @@ function initRuleModel (group = {}) {
  * @param {*} group 查看模型
  */
 function initViewModel (group = {}) {
-  if (group && group.viewType === 'form') {
+  if (group.viewType === 'form') {
     group.infoRow = initViewOneModel(group)
     if (group.children) {
       group.children.forEach((cgroup) => {
@@ -1993,7 +2078,7 @@ function initViewModel (group = {}) {
  */
 function initTableModel (group = {}) {
   let infoRow = []
-  if (group && group.viewType === 'links') {
+  if (group.viewType === 'links') {
     infoRow = infoRow.concat(...initTableOneModel(group))
   }
   return infoRow

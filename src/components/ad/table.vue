@@ -6,9 +6,12 @@
  * @LastEditors: panlihai
  -->
 <template>
-<el-input></el-input>
-  <el-table :data="value"
+  <div class="fctable">
+    <el-table :data="value"
+      :style="{height:height + 'px',overflowY:'auto',overflowX:'auto', width:width +'px', }"
+      :size="tableInfo.size||'mini'"
       current-row-key="ID"
+      :height="height"
       :border="true"
       :highlight-current-row="true"
       :default-sort="tableInfo.sort||{}"
@@ -28,18 +31,16 @@
       @selection-change="selectionChange"
       @select-all="selectAll"
       @select="selectOne">
-      <el-table-column
-        type="selection" v-if="tableInfo.selection"
-        width="39">
+      <el-table-column type="selection" v-if="tableInfo.selection" width="39">
       </el-table-column>
       <el-table-column
-          prop="rownum"
-          label="序号"
-          :show-summary="false"
-          width="45">
+        prop="rownum"
+        label="序号"
+        :show-summary="false"
+        width="45">
       </el-table-column>
-      <el-table-column  v-for="(field, index) of infoRow"
-          :key="index"
+      <el-table-column v-for="(field, index) of infoRow"
+          :key="field.fieldCode+''+index"
           label-class-name="header"
           :class-name="field.className||(index===0?'links':'')"
           :show-overflow-tooltip="true"
@@ -48,22 +49,25 @@
           :align="field.dicCode?'center':((field.inputType==='long' || field.inputType ==='double')?'right':'left')"
           :sortable="true"
           >
-          <template v-slot="scope" v-if="field.editable===true&&field.readonly!==true&&field.disable!==true">
-            <fcbasefield :field="field" :value="scope.row" placeholder=""
+          <template v-slot="scope">
+            <fcbasefield v-if="tableInfo.editable===true&&field.editable===true&&field.readonly!==true&&field.disable!==true&&index!==0" :field="field" :value="scope.row" placeholder=""
               @click="fieldClick(scope.row, field, scope.$index, scope.column, $event)"
               @dblclick="fieldDblclick(scope.row, field, scope.$index, scope.column, $event)"
               @blur="fieldBlur(scope.row, field, scope.$index, scope.column, $event)"
               @focus="fieldFocus(scope.row, field, scope.$index, scope.column, $event)"
               @change="fieldValueChange(scope.row, field, scope.$index, scope.column, $event)">
             </fcbasefield>
+            <span v-else>
+              {{scope.row[field.fieldCode]}}
+            </span>
           </template>
       </el-table-column>
       <el-table-column
+        show-overflow-tooltip
         v-if="tableInfo.hasaction === true && tableInfo.lineToolbar"
         class-name="operate-temp"
         prop="action"
-        label="操作"
-        width="100">
+        :label="'操作'">
         <template v-slot="{row, $index, column}">
           <el-button
             v-for="(btn, btnindex) of tableInfo.lineToolbar" :key="btnindex"
@@ -75,80 +79,73 @@
           </el-button>
         </template>
       </el-table-column>
-  </el-table>
+    </el-table>
+    <el-pagination v-if="tableInfo.pagination==='in'"
+      @size-change="sizeChange"
+      @current-change="pageChange"
+      @prev-click="prevPage"
+      @next-click="nextPage"
+      :current-page="tableInfo.pageNum"
+      :page-sizes="[20, 50, 100, 200, 300, 500, 1000]"
+      :page-size="tableInfo.pageSize"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="tableInfo.totalSize">
+    </el-pagination>
+  </div>
 </template>
 <script>
 import ViewModel from './list-form'
 import fcbasefield from './field'
-import store from '@/store'
-import { useRoute } from 'vue-router'
-import Model from '@/api/model'
 
 export default {
   name: 'fctable',
   components: { fcbasefield },
   props: {
+    tableInfo: {
+      type: Object,
+      default: () => ({})
+    },
+    select: {
+      type: Object,
+      default: () => ({})
+    },
+    isloading: {
+      type: Boolean,
+      default: () => false
+    },
     height: {
       type: Number,
-      default: () => document.body.clientHeight - 169 - 47
+      default: () => document.body.clientHeight - 169 - 47 - (this.tableInfo.pagination === 'in' ? 40 : 0)
+    },
+    width: {
+      type: Number,
+      default: () => document.body.clientWidth - 228
+    },
+    value: {
+      type: Array,
+      default: () => []
     }
   },
   data () {
     return {
-      infoRow: [],
-      value: [],
-      tableInfo: {}
+      infoRow: []
     }
   },
   watch: {
-    // tableInfo: {
-    //   handler () {
-    //     this.init()
-    //   },
-    //   deep: true,
-    //   immediate: true
-    // }
-    fields: {
+    tableInfo: {
       handler () {
-        this.infoRow = [this.fields]
-      }
+        this.init()
+      },
+      deep: true,
+      immediate: true
     }
-  },
-  created () {
-    window.onresize = () => {
-      // this.height = document.body.clientHeight - 169 - 47
-    }
-    this.appId = useRoute().params.APPID
-    // store.dispatch('model/initapp', { AID: this.appId, PID: this.system.pid }).then(() => {
-    //   this.appModel = this.app[this.appId]
-    //   this.init()
-    // })
-    this.init()
   },
   methods: {
+    /**
+     * 初始化列表行
+     */
     init () {
-      this.isLoading = false
-      this.value = []
-      if (this.tableInfo === undefined) {
-        return
-      }
-      store.dispatch('model/query', {
-        AID: this.appId,
-        PAGENUM: this.tableInfo.pageNum || 1,
-        PAGESIZE: this.tableInfo.pageSize || 20
-      }).then((result) => {
-        this.tableInfo = Model.toTable(result.MODEL)
-        this.infoRow = ViewModel.initTableModel(this.tableInfo)
-        result.DATA.forEach((d, index) => {
-          d.rownum = index + 1
-        })
-        this.value = [...result.DATA]
-        this.tableInfo.totalSize = result.TOTALSIZE
-      }).catch((result) => {
-        console.log(result)
-      }).finally(() => {
-        this.isLoading = false
-      })
+      this.infoRow = ViewModel.initTableModel(this.tableInfo)
     },
     toolbar (value, $index, column, btn) {
       this.event('toolbar', {
@@ -174,7 +171,7 @@ export default {
         value, row, cell, event, field
       })
       // 当是链接字段，同时不可编辑的时候 或者 为只读 为禁用的时候可点击打开链接
-      if (row.className === 'links' && (this.tableInfo.editable !== true || field.readonly === true || field.disabled === true)) {
+      if ((row.className === 'links' && this.tableInfo.editable !== true) || field.readonly === true || field.disabled === true) {
         this.event('linkclick', {
           value, row, cell, event, field
         })
@@ -350,7 +347,7 @@ export default {
     },
     fieldValueChange (data, field, index, column, $event) {
       data = { ...data, ...$event.change }
-      const fieldCode = field.tableName === undefined ? field.fieldCode : `${field.tableName}.${field.fieldCode}`
+      const fieldCode = field.tableName === undefined ? field.fieldCode : `${field.tableName}___${field.fieldCode}`
       // eslint-disable-next-line vue/no-mutating-props
       this.value[index][fieldCode] = $event.change[fieldCode]
       this.event('change', {
@@ -371,7 +368,7 @@ export default {
 }
 .fctable {
   overflow-y: auto;
-  height: calc(100% - 300px);
+  // height: calc(100% - 300px);
 }
 .links {
   color:#2440B3;
@@ -382,15 +379,15 @@ export default {
 }
 
 ::-webkit-scrollbar{
-    width: 10px;
-    height: 10px;
+    width: 2px;
+    height: 2px;
 }
 ::-webkit-scrollbar-track{
-    border-radius: 10px;
+    border-radius: 1px;
     background-color: #efefef;
 }
 ::-webkit-scrollbar-thumb{
-  border-radius: 10px;
+  border-radius: 1px;
   background-color: #18ab8f;
 }
 </style>

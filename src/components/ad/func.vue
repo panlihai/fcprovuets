@@ -1,583 +1,593 @@
-<!--
- * @Description: In User Settings Edit
- * @Author: panlihai
- * @Date: 2020-12-7 14:35:06
- * @LastEditTime: 2020-12-7 14:35:06
- * @LastEditors: panlihai
- -->
 <template>
-  <div class="app">
-    <div class="table" :style="{height:height+'px'}">
-      <div class="content">
-        <fctable :tableInfo="tableInfo" :fields="tableFields" :height="height" :isloading="isLoading"
-          :value="this.value" @toolbar="tableToolbar" @cellclick="tableCellClick"
-          @celldblclick="tableCellDblClick" @rowclick="tableRowClick" @rowdblclick="tableRowDblClick"
-          @sortchange="tableSortChange" @headerclick="tableHeaderClick" @rowcontextmenu="tableRowContextmenu"
-          @headercontextmenu="tableHeaderContextmenu" @selectionchange="tableSelectionChange" @selectall="tableSelectAll"
-          @select="tableSelectOne" @pagechange="tablePageChange" @linkclick="tableLinkClick" @change="tableFieldValueChange"></fctable>
+  <div>
+    <fcapp :model="model" :height="height" :width="width" @formevent="formevent"
+     @viewevent="viewevent" @toolbarevent="toolbarevent" @queryevent="queryevent" @tableevent="tableevent">
+    <template v-slot:formchild>
+      </template>
+      <template v-slot:formlistchild>
+      </template>
+      <template v-slot:viewchild>
+      </template>
+      <template v-slot:viewlistchild>
+      </template>
+    </fcapp>
+    <el-dialog
+      v-if="fieldConfigShow"
+      title="字段配置"
+      v-model:visible="fieldConfigShow"
+      v-dialogDrag
+      width="540px"
+      :before-close="openFieldConfig"
+      append-to-body
+    >
+      <el-transfer
+        v-model="parentFields"
+        :data="childFields"
+        :titles="['明细字段', '表头字段']"
+      ></el-transfer>
+    </el-dialog>
+    <!-- 随手记 -->
+    <el-dialog
+      v-if="dialogNotesVisible"
+      class="bill-dialog"
+      :title="title"
+      v-dialogDrag
+      :close-on-click-modal="false"
+      :close-on-press-escape="true"
+      v-model:visible="dialogNotesVisible">
+      <div
+        class="bill"
+        v-for="(item, index) of templateList"
+        :key="index">
+        <div class="title">
+          <span class="text" v-text="item.name"></span>
+        </div>
+        <div class="content">
+          <div class="placeholder" v-if="!item.child || !item.child.length">
+            {{ $t('该随手记未配置模板') }}
+          </div>
+          <template v-else>
+            <div
+              class="boe-operation"
+              v-for="(opera, index) of item.child"
+              v-show="item.showMore || index < 9"
+              :key="index"
+              :title="opera.name"
+              @click="add(item, opera)">
+              <div class="icon-wrap">
+                <svg class="icon" aria-hidden="true" v-if="opera.icon">
+                  <use :xlink:href="opera.icon"></use>
+                </svg>
+                <div class="icon" v-else>
+                  {{ opera.name && opera.name.slice(0, 2) }}
+                </div>
+              </div>
+              <div class="name" v-text="opera.name"></div>
+            </div>
+            <div class="boe-operation" v-if="item.child.length >= 10 && !item.showMore" @click="handlerShowMoreTemplate(item)">
+              <div class="icon-wrap">
+                <div class="icon">
+                  {{ $t('更多') }}
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
-import ViewModel from './list-form'
-import fctable from './table'
-import store from '@/store'
-import { useRoute } from 'vue-router'
+import fcapp from './app'
 import Model from '@/api/model'
-
-const tableevent = 'tableevent'
-const toolbarevent = 'toolbarevent'
-const viewevent = 'viewevent'
-const formevent = 'formevent'
-const queryevent = 'queryevent'
-
+// import { useRoute } from 'vue-router'
 export default {
-  name: 'fcapp',
-  components: {
-    fctable
-  },
-  data () {
-    return {
-      // 查询条件
-      searchObj: {},
-      // 选中的对象
-      selectedObj: {},
-      // 选择的所有对象
-      selectedObjs: [],
-      // 表高的设置
-      height: document.body.clientHeight - 169 - 47,
-      select: { ...ViewModel.select },
-      methods: { ...ViewModel.methods },
-      isLoading: false,
-      formShow: false,
-      viewShow: false,
-      appId: '',
-      appModel: {},
-      tableInfo: {},
-      tableFields: [],
-      formInfo: {},
-      viewInfo: {},
-      searchInfo: {}
-    }
-  },
-  watch: {
-    model () {
-      this.init()
+  name: 'sysfunc',
+  components: { fcapp },
+  props: {
+    param: {
+      type: Object,
+      default: () => ({ APPID: '' })
     }
   },
   computed: {
     ...mapState('model', {
-      app: state => state
+      allModel: (state) => {
+        return state
+      }
     }),
     ...mapState('system', {
-      system: state => state
+      userInfo: (state) => state.sysuser
     })
   },
-  created () {
-    window.onresize = () => {
-      // this.height = document.body.clientHeight - 169 - 47
+  data () {
+    return {
+      fieldConfigShow: false,
+      model: {
+        searchInfo: {
+        },
+        tableInfo: {}
+      },
+      // 表头字段
+      parentFields: [],
+      // 子表字典
+      childFields: [],
+      // 选择随手记类型弹窗
+      dialogNotesVisible: false,
+      title: '',
+      showMore: false,
+      templateList: [],
+      mainObj: {},
+      // 状态
+      status: '-1',
+      height: document.body.clientHeight - 180,
+      width: document.body.clientWidth - 228,
+      data: []
     }
-    this.appId = useRoute().params.APPID
-    // store.dispatch('model/initapp', { AID: this.appId, PID: this.system.pid }).then(() => {
-    //   this.appModel = this.app[this.appId]
-    //   this.init()
-    // })
-    this.init()
+  },
+  watch: {
+    /**
+     * 字段配置调整后重新计算
+     */
+    parentFields () {
+      const fieldstr = `${this.parentFields.join(',')},`
+      const group = this.model.formInfo
+      // 找到所有的表头字段
+      group.fldGroup[0].fields = []
+      Object.keys(group.fields).forEach((fieldCode) => {
+        if (fieldstr.indexOf(`${fieldCode},`) !== -1 || group.fields[fieldCode].tableName !== 'OP_BUSINESS_NOTE_LINES') {
+          group.fldGroup[0].fields.push({ fieldCode })
+        }
+      })
+      // 追加新移动过来的字段
+      this.parentFields.forEach((fieldCode) => {
+        // 判断是否存在，存在则不加入
+        const filter = group.fldGroup[0].fields.filter(
+          f => f === fieldCode
+        )
+        if (filter.length === 0) {
+          group.fldGroup[0].fields.push({ fieldCode })
+        }
+      })
+      // 找到行字段
+      group.children
+        .filter(cg => cg.fldGroupCode === 'appendInfo')
+        .forEach((cgroup) => {
+          // 追加新移动过来的字段
+          cgroup.fldGroup[0].fields = []
+          this.childFields
+            .filter(f => fieldstr.indexOf(`${f.key},`) === -1)
+            .forEach((f) => {
+              cgroup.fldGroup[0].fields.push({ fieldCode: f.key })
+            })
+        })
+      // this.model = { ...this.model }
+    }
+  },
+  created () {
+    // this.param = useRoute().params
+    this.model = this.allModel[this.param.APPID]
+    // 查询数据
+    this.query()
+    window.onresize = () => {
+      this.height = document.body.clientHeight - 200
+      this.width = document.body.clientWidth - 40
+    }
   },
   methods: {
-    init () {
-      this.query()
+    /**
+     * 工具栏事件处理
+     * 各个按钮事件（btn的btnAct事件）
+     */
+    toolbarevent (param) {
+      console.log(`工具栏内部${param.desc || ''}`, param)
+      switch (param.eventname) {
+        // 点击新增
+        case 'add':
+          // 新增态
+          this.status = '0'
+          this.handlerClick()
+          break
+        // 点击工具栏删除
+        case 'delete':
+          // 删除态
+          this.status = '1'
+          this.delete(param)
+          break
+        default:
+          console.log(`未处理事件${param.desc || ''}，事件名称${param.eventname}`, param)
+      }
     },
     /**
-     * 查询方法
-     * 利用查询条件（searchObj对象）及分页条件（pagination对象）拼装条件查询后端
+     * 表单事件处理
+     * 包括表单事件focus,blur,change,click,dblclick，标题click
+     * 包括表单子表事件处理单击、双击单元格或行，单选，多选，全选行，右键单元格及标题，标题点击排序事件
+     * 包括表单工具栏事件及列表工具栏事件处理（btn的btnAct事件）
      */
-    query () {
-      this.isLoading = false
-      this.value = []
-      if (this.tableInfo === undefined) {
-        return
+    formevent (param) {
+      switch (param.eventname) {
+        // 点击列表编辑
+        case 'close':
+          this.model.formInfo.formShow = false
+          this.model = { ...this.model }
+          break
+        // 点击列表编辑
+        case 'edit':
+          this.handlerClick()
+          break
+        case 'save':
+          this.save(param)
+          break
+        case 'tablefieldchange':
+        case 'change':
+          this.initValueFromForm(param)
+          break
+        // 工具栏新增事件
+        case 'delete':
+          // 随手记明细处理
+          if (param.fldGroupCode === 'appendInfo') {
+            // 提示确认删除
+            this.$confirm('此操作将永久删除选中数据, 是否继续?', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }).then(() => {
+              param.grp.data = param.grp.data.filter((d, index) => param.index !== index)
+            }, () => {
+              this.$message({
+                type: 'info',
+                message: '已取消删除'
+              })
+            })
+          }
+          break
+        // 表单分组工具栏事件
+        case 'grouptoolbar':
+          // 随手记明细处理
+          if (param.fldGroupCode === 'appendInfo') {
+            switch (param.btn.btnAct) {
+              // 工具栏字段配置事件
+              case 'openFieldConfig':
+                this.openFieldConfig()
+                break
+              // 工具栏新增事件
+              case 'add':
+                param.grp.data.push({})
+                break
+              default:
+            }
+          }
+          break
+        default:
+          console.log(`未处理事件${param.desc || ''}，事件名称${param.eventname}`, param)
       }
-      store.dispatch('model/query', {
-        AID: this.appId,
-        PAGENUM: this.tableInfo.pageNum || 1,
-        PAGESIZE: this.tableInfo.pageSize || 20
-      }).then((result) => {
-        this.tableInfo = Model.toTable(result.MODEL)
-        this.tableFields = ViewModel.initTableModel(this.tableInfo)
-        result.DATA.forEach((d, index) => {
-          d.rownum = index + 1
-        })
-        this.value = [...result.DATA]
-        this.tableInfo.totalSize = result.TOTALSIZE
-        // })
-      }).catch((result) => {
-        console.log(result)
-      }).finally(() => {
-        this.isLoading = false
+    },
+    /**
+     * 预览事件处理
+     * 包括表单事件focus,blur,change,click,dblclick，标题click
+     * 包括表单子表事件处理单击、双击单元格或行，单选，多选，全选行，右键单元格及标题，标题点击排序事件
+     * 包括表单工具栏事件及列表工具栏事件处理（btn的btnAct事件）
+     */
+    viewevent (param) {
+      console.log(`预览${param.desc || ''}`, param)
+      switch (param.eventname) {
+        // 点击列表编辑
+        case 'close':
+          this.model.viewInfo.formShow = false
+          this.model = { ...this.model }
+          break
+        default:
+          console.log(`未处理事件${param.desc || ''}，事件名称${param.eventname}`, param)
+      }
+    },
+    /**
+     * 查询条件事件处理
+     * 包括表单事件focus,blur,change,click,dblclick，标题click
+     * 包括查询，重置，异常及显示更多行
+     */
+    queryevent (param) {
+      console.log(`查询${param.desc || ''}`, param)
+      switch (param.eventname) {
+        case 'showmore':
+          this.height = document.body.clientHeight - 200 - 47 * (this.model.searchInfo.viewRowSize || 1)
+          break
+        // 点击列表编辑
+        case 'reset':
+        case 'search':
+          this.query()
+          break
+        default:
+          console.log(`未处理事件${param.desc || ''}，事件名称${param.eventname}`, param)
+      }
+    },
+    /**
+     * 列表事件处理
+     * 列表事件处理单击、双击单元格或行，单选，多选，全选行，右键单元格及标题，标题点击排序事件
+     * 列表行单元格输入事件focus,blur,change,click,dblclick，
+     * 包括列表行工具栏事件及列表工具栏事件处理（btn的btnAct事件）
+     * 包括分页事件pageChange
+     */
+    tableevent (param) {
+      console.log(`列表${param.desc || ''}`, param)
+      // 随手记明细处理
+      switch (param.eventname) {
+        case 'linkclick':
+          // 浏览态
+          this.status = '2'
+          this.loadingVersionModule(param.value.templateId, param.value.templateVersionId, param.value.assetsCategoryId, () => {
+            this.model.viewInfo.formShow = true
+            this.model.viewInfo.data = [param.value]
+          })
+          break
+        // 点击列表编辑
+        case 'edit':
+        // eslint-disable-next-line no-fallthrough
+        case 'celldblclick':
+          // 修改态
+          this.status = '3'
+          this.loadingVersionModule(param.value.templateId, param.value.templateVersionId, param.value.assetsCategoryId, () => {
+            this.model.formInfo.formShow = true
+            this.model.formInfo.data = [param.value]
+          })
+          break
+        case 'delete':
+          // 删除态
+          this.status = '1'
+          // 删除单个
+          this.delete(param)
+          break
+        default:
+          console.log(`未处理事件${param.desc || ''}，事件名称${param.eventname}`, param)
+      }
+    },
+    /**
+     * 点击新增后打开选择不同的随手记模板
+     */
+    handlerClick () {
+      this.dialogNotesVisible = true
+    },
+    /**
+     * 点击新增后的操作
+     */
+    add (param, child) {
+      console.log(param, child)
+      this.dialogNotesVisible = false
+      this.loadingModule(child.id, () => {
+        this.model.formInfo.formShow = true
       })
     },
     /**
-     * 删除操作之前的处理，可校验是否可以删除，返回ture进行下一步，返回false则放弃
+     * 根据templateid加载数据
      */
-    beforeDelete () {
-      return new Promise((resolve) => {
-        this.$http.get(`/server/api/SYSTEM/SYSMODEL/listinfo?AID=SYSAPP&PAGENUM=${this.tableInfo.pageNum}&PAGESIZE=${this.tableInfo.pageSize}`).then(() => {
-          resolve(true)
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        }).catch(() => {})
+    loadingModule (templateId, callback) {
+      this.$http.post(`/base/templatecontent/selectMaxContentByDefineId?templateDefineId=${templateId}`)
+        .then((result) => {
+          if (result.data.code === 0) {
+            try {
+              this.model = { ...this.model, ...JSON.parse(result.data.sysTemplateContentDTO.template1), ...{ tableInfo: this.model.tableInfo, searchInfo: this.model.searchInfo } }
+              this.model.formInfo.data = [{ templateId, templateVersionId: result.data.sysTemplateContentDTO.id }]
+              this.model.viewInfo.data = [{}]
+              this.counteFields()
+              if (callback) {
+                callback()
+              }
+            } catch (error) {
+              console.log(error)
+            }
+          }
+        })
+    },
+    /**
+     * 根据templateVersionid（模板版本的id值）加载模板
+     */
+    loadingVersionModule (templateVersionId, callback) {
+      this.$http.get(`/base/templatecontent/${templateVersionId}`)
+        .then((result) => {
+          if (result.data.code === 0) {
+            try {
+              this.model = { ...this.model, ...JSON.parse(result.data.sysTemplateContentDTO.template1), ...{ tableInfo: this.model.tableInfo, searchInfo: this.model.searchInfo } }
+              this.model.formInfo.data = [{}]
+              this.model.viewInfo.data = [{}]
+              this.counteFields()
+              if (callback) {
+                callback()
+              }
+            } catch (error) {
+              console.log(error)
+            }
+          }
+        })
+    },
+    /**
+     * 字段配置页面关闭或打开
+     */
+    openFieldConfig () {
+      this.fieldConfigShow = !this.fieldConfigShow
+    },
+    /**
+     * 字段配置
+     */
+    counteFields () {
+      this.parentFields = []
+      this.childFields = []
+      const group = this.model.formInfo
+      Object.keys(group.fields).forEach((fieldCode) => {
+        const f = group.fields[fieldCode]
+        // 子表
+        if (f.tableName === 'OP_BUSINESS_NOTE_LINES') {
+          this.parentFields.push(fieldCode)
+          this.childFields.push({ key: f.fieldCode, label: f.fieldName })
+        }
+      })
+      group.children
+        .filter(cg => cg.fldGroupCode === 'appendInfo')
+        .forEach((cgroup) => {
+          cgroup.fldGroup[0].fields.forEach((field) => {
+            const cf = cgroup.fields[field.fieldCode]
+            // 子表
+            if (cf.tableName === 'OP_BUSINESS_NOTE_LINES') {
+              this.childFields.push({
+                key: field.fieldCode,
+                label: cf.fieldName
+              })
+            }
+          })
+        })
+    },
+    /**
+     * 计算需要保存的内容
+     */
+    initValueFromForm (param) {
+      const basicObj = {}
+      Object.keys(param.value.basic).forEach((key) => {
+        const tableNameFieldCode = key.split('___')
+        const tableName = tableNameFieldCode[0]
+        const fieldCode = tableNameFieldCode[1]
+        let valueObj = basicObj[tableName]
+        if (valueObj === undefined) {
+          valueObj = {}
+          basicObj[tableName] = valueObj
+        }
+        valueObj[fieldCode] = param.value.basic[key]
+      })
+      let value = {}
+      const detailObj = []
+      Object.keys(param.value.appendInfo).forEach((tableName) => {
+        if (basicObj[tableName]) {
+          value[tableName] = []
+          const values = detailObj[tableName]
+          values.forEach((v) => {
+            value[tableName].push({ ...v, ...basicObj[tableName] })
+          })
+          delete basicObj[tableName]
+        } else {
+          value[tableName] = detailObj[tableName]
+        }
+      })
+      if (param.value.fileList instanceof Object) {
+        param.value.fileList = [param.value.fileList]
+      }
+      // 把单对象转为数组方式提交
+      Object.keys(basicObj).forEach((key) => {
+        basicObj[key] = [basicObj[key]]
+      })
+      if (param.value.invoiceList instanceof Object) {
+        param.value.invoiceList = [param.value.invoiceList]
+      }
+      value = {
+        fileList: param.value.fileList,
+        invoiceList: param.value.invoiceList,
+        ...value,
+        ...basicObj
+      }
+      this.mainObj = value
+    },
+    /**
+     * 查询列表
+     */
+    query () {
+      this.data = []
+      Model.Listinfo(this.param.APPID, {}).then((result) => {
+        if (result.CODE === '0') {
+          try {
+            // this.model = { ...this.model, ...{ tableInfo: Model.toTable(result.MODEL) } }
+            this.data = result.DATA
+            this.data.map((d, index) => {
+              d.rownum = index + 1
+              return d
+            })
+          } catch (error) {
+            console.log(error)
+          }
+        }
       })
     },
     /**
      * 删除操作
-     * @param {*} delObjs 删除多个对象
      */
-    delete (delObjs) {
-      return new Promise((resolve) => {
-        resolve(delObjs)
-      })
-    },
-    /**
-     * 删除之后执行自定义操作
-     */
-    afterDelete () {
-      console.log()
-    },
-    /**
-     * 点击编辑按钮后，打开弹窗前执行的操作，在此可以校验是否可以编辑，返回ture进行下一步，返回false则放弃
-     * 自定义校验规则
-     * 数据对象为this.selectObj
-     */
-    beforeEdit () {
-      return new Promise((resolve) => {
-        resolve({})
-      })
-    },
-    /**
-     * 点击保存之前的操作，可以做校验，调整数据内容，返回ture则可以提交保存，返回false则放弃保存
-     * 数据对象为this.selectObj
-     */
-    beforeSave () {
-      console.log()
-    },
-    /**
-     * 保存操作，此操作执行完后将执行方法this.query()
-     */
-    save () {
-      return new Promise((resolve) => {
-        resolve({})
-      })
-    },
-    /**
-     * 保存完成后执行的操作，不论是否成功都将执行
-     */
-    afterSave () {
-      console.log()
-    },
-    loadNode (node, resolve) {
-      if (node.level === 0) {
-        return resolve([{ name: 'region1' }, { name: 'region2' }])
-      }
-      if (node.level > 3) return resolve([])
-      let hasChild
-      if (node.data.name === 'region1') {
-        hasChild = true
-      } else if (node.data.name === 'region2') {
-        hasChild = false
+    delete (param) {
+      if (param.selectedObjs && param.selectedObjs.length !== 0) {
+        // 提示确认删除
+        this.$confirm('此操作将永久删除选中数据, 是否继续?', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        }).then(() => {
+          const ids = param.selectedObjs.map(obj => obj.id)
+          this.$http.delete('/boe/templateConfig', { data: { templateConfigCode: 'sysBusinessUseTemplateSerice', ids } }).then((result) => {
+            if (result.data.code === 0) {
+              try {
+                this.$message({
+                  type: 'info',
+                  message: '已删除数据'
+                })
+                this.query()
+              } catch (error) {
+                console.error(error)
+              }
+            } else {
+              this.$message({
+                type: 'warning',
+                message: '请选择数据'
+              })
+            }
+          })
+        })
       } else {
-        hasChild = Math.random() > 0.5
+        this.$message({
+          type: 'warning',
+          message: '请选择数据'
+        })
       }
-      setTimeout(() => {
-        let data
-        if (hasChild) {
-          data = [{
-            name: `zone${this.count++}`
-          }, {
-            name: `zone${this.count++}`
-          }]
-        } else {
-          data = []
-        }
-        resolve(data)
-      }, 500)
-      return ''
     },
-    // 公共方法
-    // ...this.methods,
     /**
-     * 查询工具栏
+     * 删除操作
      */
-    queryToolbar (param) {
-      switch (param.eventname) {
-        case 'showmore':
-          this.height = document.body.clientHeight - 169 - 47 * this.searchInfo.viewRowSize
-          break
-        case 'reset':
-          this.searchObj = {}
-        // eslint-disable-next-line no-fallthrough
-        case 'search':
-          this.query()
-          break
-        case 'change':
-          this.searchObj = { ...this.searchObj, ...param.value }
-          break
-        default:
-          // 默认方法
-          if (this[param.btn.btnAct]) {
-            this[param.btn.btnAct](param)
+    save (param) {
+      console.log(this.mainObj, param)
+      if (this.status === '3') { // 修改
+        this.$http.put('/boe/templateConfig', { templateConfigCode: 'sysBusinessUseTemplateSerice', ...this.mainObj }).then((result) => {
+          if (result.data.code === 0) {
+            try {
+              this.$message({
+                type: 'info',
+                message: '已保存'
+              })
+            } catch (error) {
+              console.error(error)
+            }
+          } else {
+            this.$message({
+              type: 'warning',
+              message: result.data.msg
+            })
           }
+        })
+      } else if (this.status === '0') { // 新增
+        this.$http.post('/boe/templateConfig', { templateConfigCode: 'sysBusinessUseTemplateSerice', ...this.mainObj }).then((result) => {
+          if (result.data.code === 0) {
+            try {
+              this.$message({
+                type: 'info',
+                message: '已保存'
+              })
+            } catch (error) {
+              console.error(error)
+            }
+          } else {
+            this.$message({
+              type: 'warning',
+              message: result.data.msg
+            })
+          }
+        })
       }
-      this.event(queryevent, param.eventname, param)
-    },
-    /**
-     * 工具栏事件
-     */
-    toolbar (param) {
-      if (param.btn) {
-        switch (param.btn.btnAct) {
-          case 'listAdd':
-            this.formShow = true
-            break
-          default:
-        }
-      }
-      this.event(toolbarevent, param.btn.btnAct, param)
-    },
-    /**
-     * 查看窗口关闭
-     */
-    viewClose () {
-      this.viewShow = false
-    },
-    /**
-     * 编辑窗口关闭
-     */
-    formClose () {
-      this.formShow = false
-    },
-    /**
-     * 表单内容列表的工具栏事件
-     */
-    formTableToolbar (param) {
-      this.event(formevent, param.btn.btnAct, param)
-    },
-    /**
-     * 表单分区或分组工具栏事件
-     */
-    formGroupToolbar (param) {
-      this.event(formevent, param.btn.btnAct, param)
-    },
-    /**
-     * 字段标题点击
-     */
-    formFieldLabelClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 视图工具栏事件
-     */
-    viewToolbar (param) {
-      this.event(viewevent, param.btnAct, { eventname: param.btnAct, desc: '表单工具栏事件', btn: param })
-    },
-    /**
-     * 表单工具栏事件
-     * @param {*} param 按钮事件名称
-     */
-    formToolbar (param) {
-      this.event(formevent, param.btnAct, { eventname: param.btnAct, desc: '表单工具栏事件', btn: param })
-    },
-    /**
-     * 表单字段点击后处理事件
-     */
-    formFieldClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单字段失去焦点后处理事件
-     */
-    formFieldBlur (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单字段获得焦点后处理事件
-     */
-    formFieldFocus (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单字段修改内容后处理事件
-     */
-    formFieldValueChange (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 列表工具栏事件
-     */
-    tableToolbar (param) {
-      this.selectedObj = param.value
-      switch (param.eventname) {
-        case 'viewOne':
-          this.formShow = true
-          break
-        default:
-      }
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.btn.btnAct, param)
-    },
-    /**
-     * 列表行点击事件处理
-     */
-    tableRowClick (param) {
-      this.selectedObj = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 双击行时，默认选中的对象修改为当前行，并打开浏览窗口
-     */
-    tableRowDblClick (param) {
-      this.selectedObj = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 列表单元格点击事件处理
-     */
-    tableCellClick (param) {
-      this.selectedObj = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 列表单元格双击事件处理
-     */
-    tableCellDblClick (param) {
-      this.selectedObj = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 打开链接，暂时支持查看当前明细
-     */
-    tableLinkClick (param) {
-      this.selectedObj = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 列表排序处理
-     */
-    tableSortChange (param) {
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 标题点击
-     */
-    tableHeaderClick (param) {
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 行右键
-     */
-    tableRowContextmenu (param) {
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 标题右键
-     */
-    tableHeaderContextmenu (param) {
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 选中行修改时
-     */
-    tableSelectionChange (param) {
-      this.selectedObjs = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 全选事件
-     */
-    tableSelectAll (param) {
-      this.selectedObjs = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 单选一行
-     */
-    tableSelectOne (param) {
-      this.selectedObj = param.value
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 列表修改值后的事件
-     */
-    tableFieldValueChange (param) {
-      param.change = param.$event.change
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 分页改变的时候
-     */
-    tablePageChange (param) {
-      param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.tableInfo.pageNum = param.pageNum
-      this.tableInfo.pageSize = param.pageSize
-      if (this.query) {
-        this.query()
-      }
-      this.event(tableevent, param.eventname, param)
-    },
-    /**
-     * 列表行点击事件处理
-     */
-    formTableRowClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 双击行时，默认选中的对象修改为当前行，并打开浏览窗口
-     */
-    formTableRowDblClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 列表单元格点击事件处理
-     */
-    formTableCellClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 列表单元格双击事件处理
-     */
-    formTableCellDblClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 打开链接，暂时支持查看当前明细
-     */
-    formTableLinkClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 列表排序处理
-     */
-    formTableSortChange (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 标题点击
-     */
-    formTableHeaderClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 行右键
-     */
-    formTableRowContextmenu (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 标题右键
-     */
-    formTableHeaderContextmenu (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 选中行修改时
-     */
-    formTableSelectionChange (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 全选事件
-     */
-    formTableSelectAll (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 单选一行
-     */
-    formTableSelectOne (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单字段点击后处理事件
-     */
-    formTableFieldClick (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单字段失去焦点后处理事件
-     */
-    formTableFieldBlur (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单字段获得焦点后处理事件
-     */
-    formTableFieldFocus (param) {
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单字段修改内容后处理事件
-     */
-    formTableFieldValueChange (param) {
-      param.change = param.$event.change
-      this.event(formevent, param.eventname, param)
-    },
-    /**
-     * 表单中列表分页改变的时候
-     */
-    formTablePageChange (param) {
-      this.tableInfo.pageNum = param.pageNum
-      this.tableInfo.pageSize = param.pageSize
-      if (this.query) {
-        this.query()
-      }
-      this.event(formevent, param.eventname, param)
-    },
-    event (parentevent, eventname, param) {
-      param.tableInfo = this.model.tableInfo
-      this.$emit(parentevent, {
-        eventname,
-        ref: this.$refs.form,
-        ...param
-      })
     }
   }
 }
 </script>
 
-<style lang="scss">
-.app {
-  display: flex;
-  flex-direction: column;
-  .search {
-  }
-  .table {
-    flex: 1;
-    display: flex;
-    .tree {
-      width: 150px
-    }
-    .content {
-      flex:1;
-    }
-  }
-  .toolbar{
-    display: flex;
-    justify-content: flex-start;
-  }
-}
+<style lang="css">
 </style>

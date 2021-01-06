@@ -8,14 +8,14 @@
 <template>
   <div class="app">
     <div class="search">
-      <fcsearch :searchInfo="searchInfo" :value="searchObj" @toolbar="queryToolbar" @change="queryToolbar"></fcsearch>
+      <fcsearch :searchInfo="vm.searchInfo" :value="searchObj" @toolbar="queryToolbar" @change="queryToolbar"></fcsearch>
     </div>
     <div class="toolbar">
-      <fctoolbar @click="toolbar" :toolbar="tableInfo.toolbar"></fctoolbar>
+      <fctoolbar @click="toolbar" :toolbar="vm.tableInfo.toolbar"></fctoolbar>
     </div>
-    <div class="table" :style="{height:height+'px'}">
+    <div class="table" :style="{height:tableHeight+'px'}">
       <div class="tree" v-if="false">
-        <div  v-for="(field, index) of tableInfo.fields" :key="index">
+        <div  v-for="(field, index) of vm.tableInfo.fields" :key="index">
           <template v-if="field.dicCode!==null">
             <label :text="field.fieldName"></label>
             <el-tree
@@ -29,8 +29,8 @@
         </div>
       </div>
       <div class="content">
-        <fctable :tableInfo="tableInfo" :fields="tableFields" :height="height" :isloading="isLoading"
-          :value="this.value" @toolbar="tableToolbar" @cellclick="tableCellClick"
+        <fctable :tableInfo="vm.tableInfo" :height="tableHeight" :width="tableWidth" :isloading="isLoading"
+          :value="value" @toolbar="tableToolbar" @cellclick="tableCellClick"
           @celldblclick="tableCellDblClick" @rowclick="tableRowClick" @rowdblclick="tableRowDblClick"
           @sortchange="tableSortChange" @headerclick="tableHeaderClick" @rowcontextmenu="tableRowContextmenu"
           @headercontextmenu="tableHeaderContextmenu" @selectionchange="tableSelectionChange" @selectall="tableSelectAll"
@@ -38,20 +38,20 @@
       </div>
     </div>
     <div class="footer">
-      <el-pagination v-if="tableInfo.pagination==='out'"
+      <el-pagination v-if="vm.tableInfo.pagination==='out'"
         @size-change="pageSizeChange"
         @current-change="pageNumChange"
         @prev-click="prevPage"
         @next-click="nextPage"
-        :current-page="tableInfo.pageNum"
+        :current-page="vm.tableInfo.pageNum"
         :page-sizes="[20, 50, 100, 200, 300, 500, 1000]"
-        :page-size="tableInfo.pageSize"
+        :page-size="vm.tableInfo.pageSize"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="tableInfo.totalSize">
+        :total="vm.tableInfo.totalSize">
       </el-pagination>
     </div>
-    <el-dialog v-dialogDrag fullscreen :title="formInfo.title" :visible="formShow===true" width="100%" height="100%" :before-close="formClose">
-      <fcform v-if="formShow===true" :formInfo="formInfo" :value="selectedObj"
+    <el-dialog v-dialogDrag fullscreen :title="vm.tableInfo.title" :visible="formShow===true" width="100%" height="100%" :before-close="formClose">
+      <fcform v-if="formShow===true" :formInfo="vm.formInfo" :value="selectedObj"
         @grouptoolbar="formGroupToolbar" @toolbar="formToolbar"
         @labelclick="formFieldLabelClick" @click="formFieldClick" @tabletoolbar="formTableToolbar"
         @blur="formFieldBlur" @focus="formFieldFocus" @change="formFieldValueChange"
@@ -63,19 +63,22 @@
         @tablelinkclick="formTableLinkClick" @tablefieldclick="formTableFieldClick"
         @tablefieldblur="formTableFieldBlur" @tablefieldfocus="formTableFieldFocus" @tablefieldchange="formTableFieldValueChange"
       >
-        <template #baseform>
-          <slot name="baseform"></slot>
+        <template #formchild>
+          <slot name="formchild"></slot>
+        </template>
+        <template #formlistchild>
+          <slot name="listchild"></slot>
         </template>
       </fcform>
       <template #footer>
         <fctoolbar
           @click="formToolbar($event.btn)"
-          :toolbar="formInfo.toolbar"
+          :toolbar="vm.formInfo.toolbar"
         ></fctoolbar>
       </template>
     </el-dialog>
-    <el-dialog fullscreen v-dialogDrag :title="viewInfo.title" :visible="viewShow===true" width="100%" :before-close="viewClose">
-      <fcview v-if="viewShow===true" :formInfo="viewInfo" :value="selectedObj"
+    <el-dialog fullscreen v-dialogDrag :title="vm.tableInfo.title" :visible="viewShow===true" width="100%" :before-close="viewClose">
+      <fcview v-if="viewShow===true" :formInfo="vm.viewInfo" :value="selectedObj"
         @grouptoolbar="formGroupToolbar" @toolbar="viewToolbar"
         @labelclick="formFieldLabelClick" @click="formFieldClick" @tabletoolbar="formTableToolbar"
         @blur="formFieldBlur" @focus="formFieldFocus" @change="formFieldValueChange"
@@ -86,14 +89,17 @@
         @tableselect="formTableSelectOne" @tablepagechange="formTablePageChange"
         @tablelinkclick="formTableLinkClick" @tablefieldclick="formTableFieldClick"
         @tablefieldblur="formTableFieldBlur" @tablefieldfocus="formTableFieldFocus" @tablefieldchange="formTableFieldValueChange">
-        <template #childView>
-          <slot name="childView"></slot>
+        <template #viewchild>
+          <slot name="formchild"></slot>
+        </template>
+        <template #viewlistchild>
+          <slot name="listchild"></slot>
         </template>
       </fcview>
       <template #footer>
         <fctoolbar
           @click="viewToolbar($event.btn)"
-          :toolbar="viewInfo.toolbar"
+          :toolbar="vm.viewInfo.toolbar"
         ></fctoolbar>
       </template>
     </el-dialog>
@@ -101,16 +107,12 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
 import ViewModel from './list-form'
 import fcform from './form'
 import fctoolbar from './toolbar'
 import fcview from './view'
 import fcsearch from './search'
 import fctable from './table'
-import store from '@/store'
-import { useRoute } from 'vue-router'
-import Model from '@/api/model'
 
 const tableevent = 'tableevent'
 const toolbarevent = 'toolbarevent'
@@ -135,12 +137,21 @@ export default {
           formShow: false
         },
         viewInfo: {
-          formShow: false
-        },
-        tableInfo: {
-          pageNum: 1, pageSize: 20
+          viewShow: false
         }
       })
+    },
+    height: {
+      type: Number,
+      default: () => document.body.clientHeight - 175
+    },
+    width: {
+      type: Number,
+      default: () => document.body.clientWidth - 228
+    },
+    value: {
+      type: Array,
+      default: () => ([])
     }
   },
   data () {
@@ -149,199 +160,72 @@ export default {
       searchObj: {},
       // 选中的对象
       selectedObj: {},
+      // 选中的分组，这里可以取出表名
+      selectGrp: {},
       // 选择的所有对象
       selectedObjs: [],
-      // 表高的设置
-      height: document.body.clientHeight - 169 - 47,
       select: { ...ViewModel.select },
-      methods: { ...ViewModel.methods },
       isLoading: false,
       formShow: false,
       viewShow: false,
-      appId: '',
-      appModel: {},
-      tableInfo: {},
-      tableFields: [],
-      formInfo: {},
-      viewInfo: {},
-      searchInfo: {}
+      tableHeight: this.height,
+      tableWidth: this.width
     }
   },
   watch: {
     model () {
-      this.init()
-    }
-  },
-  computed: {
-    ...mapState('model', {
-      app: state => state
-    }),
-    ...mapState('system', {
-      system: state => state
-    })
-  },
-  created () {
-    window.onresize = () => {
-      // this.height = document.body.clientHeight - 169 - 47
-    }
-    this.appId = useRoute().params.APPID
-    // store.dispatch('model/initapp', { AID: this.appId, PID: this.system.pid }).then(() => {
-    //   this.appModel = this.app[this.appId]
-    //   this.init()
-    // })
-    this.init()
-  },
-  methods: {
-    init () {
       if (this.model.formInfo) {
         this.formShow = this.model.formInfo.formShow || false
       }
       if (this.model.viewInfo) {
         this.viewShow = this.model.viewInfo.formShow || false
       }
-      this.appModel = { ...this.model }
-      // eslint-disable-next-line vue/no-mutating-props
-      this.formInfo = { ...this.appModel.formInfo }
-      // eslint-disable-next-line vue/no-mutating-props
-      this.viewInfo = { ...this.appModel.viewInfo }
-      this.tableInfo = { ...this.appModel.tableInfo }
-      this.searchInfo = { ...this.appModel.searchInfo }
-      this.query()
-    },
-    /**
-     * 查询方法
-     * 利用查询条件（searchObj对象）及分页条件（pagination对象）拼装条件查询后端
-     */
-    query () {
-      this.isLoading = false
-      this.value = []
-      if (this.tableInfo === undefined) {
-        return
+      if (this.formShow === true) {
+        this.selectGrp = this.model.formInfo
+        this.selectedObj = this.getInnerValue(this.value[0])
       }
-      store.dispatch('model/query', {
-        AID: this.appId,
-        PAGENUM: this.tableInfo.pageNum || 1,
-        PAGESIZE: this.tableInfo.pageSize || 20
-      }).then((result) => {
-        // store.dispatch('model/setApp', result.MODEL).then(() => {
-        this.formInfo = { ...this.appModel.formInfo }
-        // eslint-disable-next-line vue/no-mutating-props
-        this.viewInfo = { ...this.appModel.viewInfo }
-        this.tableInfo = Model.toTable(result.MODEL)
-        this.tableFields = ViewModel.initTableModel(this.tableInfo)
-        this.searchInfo = { ...this.appModel.searchInfo }
-        result.DATA.forEach((d, index) => {
-          d.rownum = index + 1
+      if (this.viewShow === true) {
+        this.selectGrp = this.model.viewInfo
+        this.selectedObj = this.getInnerValue(this.value[0])
+      }
+    },
+    height () {
+      this.tableHeight = this.height
+    },
+    width () {
+      this.tablewidth = this.width
+    }
+  },
+  computed: {
+    vm () {
+      return { ...ViewModel, ...this.model }
+    }
+  },
+  methods: {
+    getInnerValue (selectedValue) {
+      const v = {}
+      const fields = this.selectGrp.fields
+      if (selectedValue) {
+        Object.keys(fields).forEach((fieldCode) => {
+          v[`${fields[fieldCode].tableName}___${fieldCode}`] = selectedValue[fieldCode]
         })
-        this.value = [...result.DATA]
-        this.tableInfo.totalSize = result.TOTALSIZE
-        // })
-      }).catch((result) => {
-        console.log(result)
-      }).finally(() => {
-        this.isLoading = false
-      })
-    },
-    /**
-     * 删除操作之前的处理，可校验是否可以删除，返回ture进行下一步，返回false则放弃
-     */
-    beforeDelete () {
-      return new Promise((resolve) => {
-        this.$http.get(`/server/api/SYSTEM/SYSMODEL/listinfo?AID=SYSAPP&PAGENUM=${this.tableInfo.pageNum}&PAGESIZE=${this.tableInfo.pageSize}`).then(() => {
-          resolve(true)
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        }).catch(() => {})
-      })
-    },
-    /**
-     * 删除操作
-     * @param {*} delObjs 删除多个对象
-     */
-    delete (delObjs) {
-      return new Promise((resolve) => {
-        resolve(delObjs)
-      })
-    },
-    /**
-     * 删除之后执行自定义操作
-     */
-    afterDelete () {
-      console.log()
-    },
-    /**
-     * 点击编辑按钮后，打开弹窗前执行的操作，在此可以校验是否可以编辑，返回ture进行下一步，返回false则放弃
-     * 自定义校验规则
-     * 数据对象为this.selectObj
-     */
-    beforeEdit () {
-      return new Promise((resolve) => {
-        resolve({})
-      })
-    },
-    /**
-     * 点击保存之前的操作，可以做校验，调整数据内容，返回ture则可以提交保存，返回false则放弃保存
-     * 数据对象为this.selectObj
-     */
-    beforeSave () {
-      console.log()
-    },
-    /**
-     * 保存操作，此操作执行完后将执行方法this.query()
-     */
-    save () {
-      return new Promise((resolve) => {
-        resolve({})
-      })
-    },
-    /**
-     * 保存完成后执行的操作，不论是否成功都将执行
-     */
-    afterSave () {
-      console.log()
-    },
-    loadNode (node, resolve) {
-      if (node.level === 0) {
-        return resolve([{ name: 'region1' }, { name: 'region2' }])
       }
-      if (node.level > 3) return resolve([])
-      let hasChild
-      if (node.data.name === 'region1') {
-        hasChild = true
-      } else if (node.data.name === 'region2') {
-        hasChild = false
-      } else {
-        hasChild = Math.random() > 0.5
-      }
-      setTimeout(() => {
-        let data
-        if (hasChild) {
-          data = [{
-            name: `zone${this.count++}`
-          }, {
-            name: `zone${this.count++}`
-          }]
-        } else {
-          data = []
-        }
-        resolve(data)
-      }, 500)
-      return ''
+      return v
     },
-    // 公共方法
-    // ...this.methods,
     /**
      * 查询工具栏
      */
     queryToolbar (param) {
       switch (param.eventname) {
         case 'showmore':
-          this.height = document.body.clientHeight - 169 - 47 * this.searchInfo.viewRowSize
           break
         case 'reset':
           this.searchObj = {}
         // eslint-disable-next-line no-fallthrough
         case 'search':
-          this.query()
+          if (this.query) {
+            this.query()
+          }
           break
         case 'change':
           this.searchObj = { ...this.searchObj, ...param.value }
@@ -358,15 +242,10 @@ export default {
      * 工具栏事件
      */
     toolbar (param) {
+      param.selectedObjs = this.selectedObjs
       if (param.btn) {
-        switch (param.btn.btnAct) {
-          case 'listAdd':
-            this.formShow = true
-            break
-          default:
-        }
+        this.event(toolbarevent, param.btn.btnAct, param)
       }
-      this.event(toolbarevent, param.btn.btnAct, param)
     },
     /**
      * 查看窗口关闭
@@ -433,13 +312,17 @@ export default {
      * 表单字段修改内容后处理事件
      */
     formFieldValueChange (param) {
+      this.selectGrp = param.grp
+      this.selectedObj = { ...this.selectedObj, ...param.change }
       this.event(formevent, param.eventname, param)
     },
     /**
      * 列表工具栏事件
      */
     tableToolbar (param) {
-      this.selectedObj = param.value
+      this.selectGrp = param.grp
+      this.selectedObj = this.getInnerValue(param.value)
+      param.selectedObjs = [param.value]
       switch (param.eventname) {
         case 'viewOne':
           this.formShow = true
@@ -453,7 +336,8 @@ export default {
      * 列表行点击事件处理
      */
     tableRowClick (param) {
-      this.selectedObj = param.value
+      this.selectGrp = param.grp
+      this.selectedObj = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -461,7 +345,8 @@ export default {
      * 双击行时，默认选中的对象修改为当前行，并打开浏览窗口
      */
     tableRowDblClick (param) {
-      this.selectedObj = param.value
+      this.selectGrp = param.grp
+      this.selectedObj = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -469,7 +354,8 @@ export default {
      * 列表单元格点击事件处理
      */
     tableCellClick (param) {
-      this.selectedObj = param.value
+      this.selectGrp = param.grp
+      this.selectedObj = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -477,7 +363,8 @@ export default {
      * 列表单元格双击事件处理
      */
     tableCellDblClick (param) {
-      this.selectedObj = param.value
+      this.selectGrp = param.grp
+      this.selectedObj = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -485,7 +372,8 @@ export default {
      * 打开链接，暂时支持查看当前明细
      */
     tableLinkClick (param) {
-      this.selectedObj = param.value
+      this.selectGrp = param.grp
+      this.selectedObj = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -521,7 +409,7 @@ export default {
      * 选中行修改时
      */
     tableSelectionChange (param) {
-      this.selectedObjs = param.value
+      this.selectedObjs = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -529,7 +417,7 @@ export default {
      * 全选事件
      */
     tableSelectAll (param) {
-      this.selectedObjs = param.value
+      this.selectedObjs = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -537,7 +425,8 @@ export default {
      * 单选一行
      */
     tableSelectOne (param) {
-      this.selectedObj = param.value
+      this.selectGrp = param.grp
+      this.selectedObj = this.getInnerValue(param.value)
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -545,7 +434,9 @@ export default {
      * 列表修改值后的事件
      */
     tableFieldValueChange (param) {
+      this.selectGrp = param.grp
       param.change = param.$event.change
+      this.selectedObj = { ...this.selectedObj, ...param.change }
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
       this.event(tableevent, param.eventname, param)
     },
@@ -554,8 +445,8 @@ export default {
      */
     tablePageChange (param) {
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.tableInfo.pageNum = param.pageNum
-      this.tableInfo.pageSize = param.pageSize
+      this.vm.tableInfo.pageNum = param.pageNum
+      this.vm.tableInfo.pageSize = param.pageSize
       if (this.query) {
         this.query()
       }
@@ -656,14 +547,16 @@ export default {
      */
     formTableFieldValueChange (param) {
       param.change = param.$event.change
+      this.selectGrp = param.grp
+      this.selectedObj = { ...this.selectedObj, ...param.change }
       this.event(formevent, param.eventname, param)
     },
     /**
      * 表单中列表分页改变的时候
      */
     formTablePageChange (param) {
-      this.tableInfo.pageNum = param.pageNum
-      this.tableInfo.pageSize = param.pageSize
+      this.vm.tableInfo.pageNum = param.pageNum
+      this.vm.tableInfo.pageSize = param.pageSize
       if (this.query) {
         this.query()
       }
@@ -684,12 +577,16 @@ export default {
 <style lang="scss">
 .app {
   display: flex;
+  .el-dialog__body{
+    background-color: #f1f1f1;
+  }
   flex-direction: column;
   .search {
   }
   .table {
     flex: 1;
     display: flex;
+    margin-bottom: 0;
     .tree {
       width: 150px
     }

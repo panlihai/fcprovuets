@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory, createWebHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import store from '@/store'
 import Layout from '../views/layout/layout.vue'
 const routes: Array<RouteRecordRaw> = [
@@ -20,13 +20,13 @@ const routes: Array<RouteRecordRaw> = [
         path: '/cardList',
         name: 'cardList',
         component: () => import(/* webpackChunkName: "cardList" */ '../views/CardList.vue')
+      },
+      {
+        path: '/listinfo',
+        name: 'listinfo',
+        component: () => import(/* webpackChunkName: "listionfo" */ '../components/ad/func.vue')
       }
     ]
-  },
-  {
-    path: '/listinfo',
-    name: 'listinfo',
-    component: () => import(/* webpackChunkName: "listionfo" */ '../components/ad/table.vue')
   },
   {
     path: '/about',

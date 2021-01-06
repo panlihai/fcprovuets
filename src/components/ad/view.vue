@@ -15,7 +15,7 @@
             :style="{ backgroundColor: '#fff' }"
           >
             <div class="analysis">
-              <div style="font-size: 16px">
+              <div class="titlecenter">
                 {{ model.title }}
               </div>
               <div v-if="model.counteFields && model.counteFields.length !== 0">
@@ -48,13 +48,13 @@
               </div>
               <i
                 class="el-icon-arrow-left"
-                @click="showLine(model)"
-                v-if="model.fldGroupOpen === false"
+                @click="showLine(formInfo)"
+                v-if="formInfo.fldGroupOpen === false"
               ></i>
-              <i class="el-icon-arrow-down" @click="showLine(model)" v-else></i>
+              <i class="el-icon-arrow-down" @click="showLine(formInfo)" v-else></i>
             </div>
           </div>
-          <div class="grpContent" :hidden="model.fldGroupOpen === false">
+          <div class="grpContent" :hidden="formInfo.fldGroupOpen === false">
             <fcbaseform
               :value="mainObj"
               :inforow="model.infoRow"
@@ -67,12 +67,12 @@
               @focus="fieldFocus(model, mainObj, $event)"
               @change="fieldValueChange(model, mainObj, $event)"
             >
-              <template #baseform>
-                <slot name="baseform"></slot>
+              <template #formchild>
+                <slot name="formchild"></slot>
               </template>
             </fcbaseform>
           </div>
-          <div class="grpFooter" v-if="model.fldGroupOpen===true">
+          <div class="grpFooter" v-if="formInfo.fldGroupOpen===true">
             <div v-if="model.toolbarView === 'bottomRight'">
               <fctoolbar
                 @click="groupToolbar(model, $event.btn)"
@@ -154,9 +154,6 @@
                     @focus="fieldFocus(cmodel, data, $event)"
                     @change="fieldValueChange(cmodel, data, $event)"
                   >
-                    <template #baseform>
-                      <slot name="baseform"></slot>
-                    </template>
                   </fcbaseform>
                 </template>
                 <template v-else-if="cmodel.viewType === 'links'">
@@ -210,9 +207,6 @@
                         @focus="fieldFocus(cmodel, data, $event)"
                         @change="fieldValueChange(cmodel, data, $event)"
                       >
-                        <template #baseform>
-                          <slot name="baseform"></slot>
-                        </template>
                       </fcbaseform>
                     </el-dialog>
                   </template>
@@ -227,6 +221,7 @@
                 </div>
               </div>
             </div>
+            <slot name="listchild"></slot>
           </div>
         </div>
       </div>
@@ -263,8 +258,8 @@
                 @focus="fieldFocus(model, data, $event)"
                 @change="fieldValueChange(model, data, $event)"
               >
-                <template #baseform>
-                  <slot name="baseform"></slot>
+                <template #formchild>
+                  <slot name="formchild"></slot>
                 </template>
               </fcbaseform>
             </div>
@@ -330,9 +325,6 @@
                   @focus="fieldFocus(cmodel, data, $event)"
                   @change="fieldValueChange(cmodel, data, $event)"
                 >
-                  <template #baseform>
-                    <slot name="baseform"></slot>
-                  </template>
                 </fcbaseform>
               </template>
               <template v-else-if="cmodel.viewType === 'links'">
@@ -386,9 +378,6 @@
                       @focus="fieldFocus(cmodel, data, $event)"
                       @change="fieldValueChange(cmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </el-dialog>
                 </template>
@@ -475,9 +464,6 @@
                       @focus="fieldFocus(ccmodel, data, $event)"
                       @change="fieldValueChange(ccmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </template>
                   <template v-else-if="ccmodel.viewType === 'links'">
@@ -533,9 +519,6 @@
                           @focus="fieldFocus(ccmodel, data, $event)"
                           @change="fieldValueChange(ccmodel, data, $event)"
                         >
-                          <template #baseform>
-                            <slot name="baseform"></slot>
-                          </template>
                         </fcbaseform>
                       </el-dialog>
                     </template>
@@ -576,6 +559,7 @@
             ></fctoolbar>
           </div>
         </el-tab-pane>
+        <slot name="listchild"></slot>
       </el-tabs>
     </template>
     <template v-else-if="model.childViewType === 'tablist'">
@@ -586,7 +570,9 @@
             :style="{ backgroundColor:'#fff' }"
           >
             <div class="analysis">
-              <div>{{ model.title }}</div>
+              <div class="titlecenter">
+                {{ model.title }}
+              </div>
               <div v-if="model.counteFields && model.counteFields.length !== 0">
                 <span
                   class="analysisItem"
@@ -617,13 +603,13 @@
               </div>
               <i
                 class="el-icon-arrow-left"
-                @click="showLine(model)"
-                v-if="model.fldGroupOpen === false"
+                @click="showLine(formInfo)"
+                v-if="formInfo.fldGroupOpen === false"
               ></i>
-              <i class="el-icon-arrow-down" @click="showLine(model)" v-else></i>
+              <i class="el-icon-arrow-down" @click="showLine(formInfo)" v-else></i>
             </div>
           </div>
-          <div class="grpContent" :hidden="model.fldGroupOpen === false">
+          <div class="grpContent" :hidden="formInfo.fldGroupOpen === false">
             <fcbaseform
               :value="mainObj"
               :inforow="model.infoRow"
@@ -636,8 +622,8 @@
               @focus="fieldFocus(model, mainObj, $event)"
               @change="fieldValueChange(model, mainObj, $event)"
             >
-              <template #baseform>
-                <slot name="baseform"></slot>
+              <template #formchild>
+                <slot name="formchild"></slot>
               </template>
             </fcbaseform>
           </div>
@@ -681,9 +667,6 @@
                   @focus="fieldFocus(cmodel, data, $event)"
                   @change="fieldValueChange(cmodel, data, $event)"
                 >
-                  <template #baseform>
-                    <slot name="baseform"></slot>
-                  </template>
                 </fcbaseform>
               </template>
               <template v-else-if="cmodel.viewType === 'links'">
@@ -737,9 +720,6 @@
                       @focus="fieldFocus(cmodel, data, $event)"
                       @change="fieldValueChange(cmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </el-dialog>
                 </template>
@@ -826,9 +806,6 @@
                       @focus="fieldFocus(ccmodel, data, $event)"
                       @change="fieldValueChange(ccmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </template>
                   <template v-else-if="ccmodel.viewType === 'links'">
@@ -884,9 +861,6 @@
                           @focus="fieldFocus(ccmodel, data, $event)"
                           @change="fieldValueChange(ccmodel, data, $event)"
                         >
-                          <template #baseform>
-                            <slot name="baseform"></slot>
-                          </template>
                         </fcbaseform>
                       </el-dialog>
                     </template>
@@ -927,6 +901,7 @@
             ></fctoolbar>
           </div>
         </el-tab-pane>
+        <slot name="listchild"></slot>
       </el-tabs>
       <!-- <div class="footer" v-if="model.linetoolbar">
         <fctoolbar
@@ -954,7 +929,8 @@ export default {
     return {
       isLoading: false,
       // 默认状态，当为-1时可以关闭，当为已保存时可以关闭
-      status: '-1'
+      status: '-1',
+      mainObj: this.value
     }
   },
   props: {
@@ -968,20 +944,21 @@ export default {
     }
   },
   computed: {
-    mainObj () {
-      return { ...this.value }
-    },
     model () {
       return { ...this.formInfo }
     }
   },
   watch: {
     formInfo: {
-      handler () {
+      // eslint-disable-next-line no-unused-vars
+      handler (newName, oldName) {
         this.init()
       },
       deep: true,
       immediate: true
+    },
+    value () {
+      this.mainObj = this.value
     }
   },
   methods: {
@@ -990,7 +967,6 @@ export default {
      */
     init () {
       ViewModel.initViewModel(this.model)
-      // ViewModel.initRuleModel(this.model);
     },
     /**
      * 点击显示或隐藏分组或分区
@@ -1017,37 +993,42 @@ export default {
     /**
      * 点击标题处理
      */
-    fieldLabelClick (grp, field) {
-      this.event('labelclick', '点击标题', { grp, field })
+    fieldLabelClick (grp, data, field) {
+      this.event('labelclick', '点击标题', { grp, data, field })
     },
     /**
      * 单击处理
      */
     fieldClick (grp, data, param) {
-      this.event('click', '单击', { grp, ...param })
+      this.event('click', '单击', { grp, data, ...param })
     },
     /**
      * 双击处理
      */
     fieldDblclick (grp, data, param) {
-      this.event('dblClick', '双击', { grp, ...param })
+      this.event('dblClick', '双击', { grp, data, ...param })
     },
     /**
      * 失去焦点处理
      */
     fieldBlur (grp, data, param) {
-      this.event('blur', '失去失去焦点', { grp, ...param })
+      this.event('blur', '失去失去焦点', { grp, data, ...param })
     },
     /**
      * 获得焦点处理
      */
     fieldFocus (grp, data, param) {
-      this.event('focus', '获得焦点', { grp, ...param })
+      this.event('focus', '获得焦点', { grp, data, ...param })
     },
     /**
      * 内容修改处理
      */
     fieldValueChange (grp, data, param) {
+      const fieldCode = param.field.tableName === undefined ? param.field.fieldCode : `${param.field.tableName}___${param.field.fieldCode}`
+      // eslint-disable-next-line vue/no-mutating-props
+      this.value[fieldCode] = param.change[fieldCode]
+      // eslint-disable-next-line vue/no-mutating-props
+      this.formInfo.data[0] = this.value
       this.event('change', '内容修改', {
         grp,
         ...param
@@ -1100,6 +1081,7 @@ export default {
      */
     tableSortChange (grp, param) {
       param.grp = grp
+      grp.status = 1
       this.event(`table${param.eventname}`, '排序', param)
     },
     /**
@@ -1183,22 +1165,79 @@ export default {
      * 列表字段内容修改处理
      */
     tableFieldValueChange (grp, data, param) {
+      // 值被修改
+      grp.status = 1
       this.event('tablefieldchange', '列表字段内容修改', {
         grp,
         ...param
       })
+    },
+    /**
+     * 获取当前表单数据内容及子表的内容
+     */
+    getAllValue () {
+      const result = {}
+      function getValue (group, data = {}) {
+        const obj = {}
+        Object.keys(data).forEach((key) => {
+          const value = data[key]
+          if (key.indexOf('.') === -1) {
+            obj[key] = value
+          } else {
+            const keys = key.split('.')
+            const tableObj = obj[keys[0]] || {}
+            tableObj[keys[1]] = value
+            obj[keys[0]] = tableObj
+          }
+        })
+        return obj
+      }
+      result[this.formInfo.fldGroupCode] = getValue(this.formInfo, this.formInfo.data[0])
+      if (this.formInfo.children) {
+        this.formInfo.children.forEach((child) => {
+          const dValue = {}
+          result[child.fldGroupCode] = dValue
+          child.data.forEach((d) => {
+            const temp = getValue(child, d)
+            Object.keys(temp).forEach((tn) => {
+              if (dValue[tn] === undefined) {
+                dValue[tn] = [temp[tn]]
+              } else {
+                dValue[tn].push(temp[tn])
+              }
+            })
+          })
+          if (child.children) {
+            child.children.forEach((cchild) => {
+              const cdValue = {}
+              result[cchild.fldGroupCode] = cdValue
+              cchild.data.forEach((d) => {
+                const temp = getValue(cchild, d)
+                Object.keys(temp).forEach((tn) => {
+                  if (cdValue[tn] === undefined) {
+                    cdValue[tn] = [temp[tn]]
+                  } else {
+                    cdValue[tn].push(temp[tn])
+                  }
+                })
+              })
+            })
+          }
+        })
+      }
+      return result
     },
     event (eventname, desc, param) {
       if (param.grp === undefined) {
         param.grp = this.model.fldGroup[0]
       }
       this.$emit(eventname, {
+        ...param,
         desc,
         fldGroupCode: param.grp.fldGroupCode,
         eventname,
         ref: this.$refs.form,
-        value: { ...this.mainObj, ...param.change },
-        ...param
+        value: this.getAllValue()
       })
     }
   }
@@ -1206,7 +1245,21 @@ export default {
 </script>
 
 <style lang="scss">
+.el-form {
+  display: block;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  flex-direction: row;
+}
 .fcform {
+  background-color: #fff;
+  margin: 10px auto;
+  width: 1200px;
+  height: auto;
+  -webkit-box-shadow: 0 0 10px 0 #d4d4d4;
+  box-shadow: 0 0 10px 0 #d4d4d4;
+  padding: 30px;
   display: flex;
   flex-direction: column;
   .formContent {
@@ -1242,6 +1295,15 @@ export default {
           justify-content: center;
           .analysisItem {
             padding: 0 5px;
+          }
+          .titlecenter {
+            font-size: 20px;
+            font-weight: 700;
+            color: #38a9ff;
+            height: 25px;
+            line-height: 25px;
+            border-bottom: 1px solid #38a9ff;
+            padding: 0 25px;
           }
         }
         .open {

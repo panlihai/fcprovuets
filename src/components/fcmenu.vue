@@ -60,7 +60,7 @@
 </template>
 <script lang='ts'>
 import { defineComponent } from 'vue'
-import { useRouter } from 'vue-router'
+// import { useRouter } from 'vue-router'
 import { mapState } from 'vuex'
 import store from '@/store'
 export interface Menu {
@@ -78,20 +78,22 @@ export default defineComponent({
     })
   },
   setup () {
-    const router = useRouter()
+    // const router = useRouter()
     const navigate = (menu: any) => {
-      store.dispatch('system/tabspush', {
-        title: menu.MENUNAME,
-        name: menu.MENUID,
-        content: '',
-        meta: { ...menu }
-      })
-      if (router) {
-        router.push({
-          name: 'listinfo',
-          params: menu
+      store.dispatch('model/initapp', { AID: menu.APPID }).then(() => {
+        store.dispatch('system/tabspush', {
+          title: menu.MENUNAME,
+          name: menu.MENUID,
+          content: require('./ad/func').default,
+          meta: { ...menu }
         })
-      }
+      })
+      // if (router) {
+      //   router.push({
+      //     name: 'listinfo',
+      //     params: menu
+      //   })
+      // }
     }
     return {
       navigate

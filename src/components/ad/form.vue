@@ -1,3 +1,4 @@
+/* eslint-disable vue/no-mutating-props */
 <!--
  * @Description: In User Settings Edit
  * @Author: panlihai
@@ -15,7 +16,7 @@
             :style="{ backgroundColor: '#fff' }"
           >
             <div class="analysis">
-              <div style="font-size: 16px">
+              <div class="titlecenter">
                 {{ model.title }}
               </div>
               <div v-if="model.counteFields && model.counteFields.length !== 0">
@@ -67,8 +68,8 @@
               @focus="fieldFocus(model, mainObj, $event)"
               @change="fieldValueChange(model, mainObj, $event)"
             >
-              <template #baseform>
-                <slot name="baseform"></slot>
+              <template #formchild>
+                <slot name="formchild"></slot>
               </template>
             </fcbaseform>
           </div>
@@ -154,9 +155,6 @@
                     @focus="fieldFocus(cmodel, data, $event)"
                     @change="fieldValueChange(cmodel, data, $event)"
                   >
-                    <template #baseform>
-                      <slot name="baseform"></slot>
-                    </template>
                   </fcbaseform>
                 </template>
                 <template v-else-if="cmodel.viewType === 'links'">
@@ -210,9 +208,6 @@
                         @focus="fieldFocus(cmodel, data, $event)"
                         @change="fieldValueChange(cmodel, data, $event)"
                       >
-                        <template #baseform>
-                          <slot name="baseform"></slot>
-                        </template>
                       </fcbaseform>
                     </el-dialog>
                   </template>
@@ -227,6 +222,7 @@
                 </div>
               </div>
             </div>
+            <slot name="listchild"></slot>
           </div>
         </div>
       </div>
@@ -263,8 +259,8 @@
                 @focus="fieldFocus(model, data, $event)"
                 @change="fieldValueChange(model, data, $event)"
               >
-                <template #baseform>
-                  <slot name="baseform"></slot>
+                <template #formchild>
+                  <slot name="formchild"></slot>
                 </template>
               </fcbaseform>
             </div>
@@ -330,9 +326,6 @@
                   @focus="fieldFocus(cmodel, data, $event)"
                   @change="fieldValueChange(cmodel, data, $event)"
                 >
-                  <template #baseform>
-                    <slot name="baseform"></slot>
-                  </template>
                 </fcbaseform>
               </template>
               <template v-else-if="cmodel.viewType === 'links'">
@@ -386,9 +379,6 @@
                       @focus="fieldFocus(cmodel, data, $event)"
                       @change="fieldValueChange(cmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </el-dialog>
                 </template>
@@ -475,9 +465,6 @@
                       @focus="fieldFocus(ccmodel, data, $event)"
                       @change="fieldValueChange(ccmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </template>
                   <template v-else-if="ccmodel.viewType === 'links'">
@@ -533,9 +520,6 @@
                           @focus="fieldFocus(ccmodel, data, $event)"
                           @change="fieldValueChange(ccmodel, data, $event)"
                         >
-                          <template #baseform>
-                            <slot name="baseform"></slot>
-                          </template>
                         </fcbaseform>
                       </el-dialog>
                     </template>
@@ -576,6 +560,7 @@
             ></fctoolbar>
           </div>
         </el-tab-pane>
+        <slot name="listchild"></slot>
       </el-tabs>
     </template>
     <template v-else-if="model.childViewType === 'tablist'">
@@ -586,7 +571,9 @@
             :style="{ backgroundColor:'#fff' }"
           >
             <div class="analysis">
-              <div>{{ model.title }}</div>
+              <div class="titlecenter">
+                {{ model.title }}
+              </div>
               <div v-if="model.counteFields && model.counteFields.length !== 0">
                 <span
                   class="analysisItem"
@@ -636,8 +623,8 @@
               @focus="fieldFocus(model, mainObj, $event)"
               @change="fieldValueChange(model, mainObj, $event)"
             >
-              <template #baseform>
-                <slot name="baseform"></slot>
+              <template #formchild>
+                <slot name="formchild"></slot>
               </template>
             </fcbaseform>
           </div>
@@ -681,9 +668,6 @@
                   @focus="fieldFocus(cmodel, data, $event)"
                   @change="fieldValueChange(cmodel, data, $event)"
                 >
-                  <template #baseform>
-                    <slot name="baseform"></slot>
-                  </template>
                 </fcbaseform>
               </template>
               <template v-else-if="cmodel.viewType === 'links'">
@@ -737,9 +721,6 @@
                       @focus="fieldFocus(cmodel, data, $event)"
                       @change="fieldValueChange(cmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </el-dialog>
                 </template>
@@ -826,9 +807,6 @@
                       @focus="fieldFocus(ccmodel, data, $event)"
                       @change="fieldValueChange(ccmodel, data, $event)"
                     >
-                      <template #baseform>
-                        <slot name="baseform"></slot>
-                      </template>
                     </fcbaseform>
                   </template>
                   <template v-else-if="ccmodel.viewType === 'links'">
@@ -884,9 +862,6 @@
                           @focus="fieldFocus(ccmodel, data, $event)"
                           @change="fieldValueChange(ccmodel, data, $event)"
                         >
-                          <template #baseform>
-                            <slot name="baseform"></slot>
-                          </template>
                         </fcbaseform>
                       </el-dialog>
                     </template>
@@ -927,6 +902,7 @@
             ></fctoolbar>
           </div>
         </el-tab-pane>
+        <slot name="listchild"></slot>
       </el-tabs>
       <!-- <div class="footer" v-if="model.linetoolbar">
         <fctoolbar
@@ -954,7 +930,8 @@ export default {
     return {
       isLoading: false,
       // 默认状态，当为-1时可以关闭，当为已保存时可以关闭
-      status: '-1'
+      status: '-1',
+      mainObj: this.value
     }
   },
   props: {
@@ -968,9 +945,6 @@ export default {
     }
   },
   computed: {
-    mainObj () {
-      return { ...this.value }
-    },
     model () {
       return { ...this.formInfo }
     }
@@ -982,6 +956,9 @@ export default {
       },
       deep: true,
       immediate: true
+    },
+    value () {
+      this.mainObj = this.value
     }
   },
   methods: {
@@ -1048,14 +1025,13 @@ export default {
      * 内容修改处理
      */
     fieldValueChange (grp, data, param) {
-      const fieldCode = param.field.tableName === undefined ? param.field.fieldCode : `${param.field.tableName}.${param.field.fieldCode}`
+      const fieldCode = param.field.tableName === undefined ? param.field.fieldCode : `${param.field.tableName}___${param.field.fieldCode}`
       // eslint-disable-next-line vue/no-mutating-props
       this.value[fieldCode] = param.change[fieldCode]
       // eslint-disable-next-line vue/no-mutating-props
       this.formInfo.data[0] = this.value
       this.event('change', '内容修改', {
         grp,
-        data,
         ...param
       })
     },
@@ -1270,7 +1246,21 @@ export default {
 </script>
 
 <style lang="scss">
+.el-form {
+  display: block;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  flex-direction: row;
+}
 .fcform {
+  background-color: #fff;
+  margin: 10px auto;
+  width: 1200px;
+  height: auto;
+  -webkit-box-shadow: 0 0 10px 0 #d4d4d4;
+  box-shadow: 0 0 10px 0 #d4d4d4;
+  padding: 30px;
   display: flex;
   flex-direction: column;
   .formContent {
@@ -1306,6 +1296,15 @@ export default {
           justify-content: center;
           .analysisItem {
             padding: 0 5px;
+          }
+          .titlecenter {
+            font-size: 20px;
+            font-weight: 700;
+            color: #38a9ff;
+            height: 25px;
+            line-height: 25px;
+            border-bottom: 1px solid #38a9ff;
+            padding: 0 25px;
           }
         }
         .open {

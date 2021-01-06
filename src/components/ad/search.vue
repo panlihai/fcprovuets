@@ -6,7 +6,7 @@
  * @LastEditors: panlihai
  -->
 <template>
-  <div class="searchModel">
+  <div class="searchModel" v-if="infoRow.length!==0">
     <el-form
       size="mini"
       label-width="100px"
@@ -14,7 +14,7 @@
       ref="form"
       :model="value"
     >
-      <el-row v-for="(row, index) of searchInfo.infoRow" :key="index">
+      <el-row v-for="(row, index) of infoRow" :key="index">
         <template
           v-if="
             (index === 0 && searchInfo.viewRowSize === 1) || searchInfo.viewRowSize !== 1
@@ -28,7 +28,7 @@
               @click="labelClick(field)"
               class="search-form-item"
             >
-              <fcbasefield :field="field" :value="mainObj" :showlabel="true" :maxrow="searchInfo.infoRow.length" :viewRowSize="searchInfo.viewRowSize"
+              <fcbasefield :field="field" :value="mainObj" :showlabel="true" :maxrow="infoRow.length" :viewRowSize="searchInfo.viewRowSize"
               @toolbar="toolbar"
               @click="fieldClick(field)"
               @dblclick="fieldDblclick(field)"
@@ -62,14 +62,27 @@ export default {
   },
   data () {
     return {
+      infoRow: [],
       mainObj: { ...this.value }
     }
   },
+  watch: {
+    searchInfo: {
+      handler () {
+        this.infoRow = ViewModel.initSearchModel(
+          this.searchInfo,
+          false
+        )
+      },
+      deep: true,
+      immediate: true
+    }
+  },
   created () {
-    // ViewModel.initSearchModel(
-    //   this.searchInfo,
-    //   false
-    // )
+    this.infoRow = ViewModel.initSearchModel(
+      this.searchInfo,
+      false
+    )
   },
   methods: {
     valueChange (field, value) {
@@ -81,7 +94,7 @@ export default {
         case 'showmore':
           if (param.showonerow) {
             // eslint-disable-next-line vue/no-mutating-props
-            this.searchInfo.viewRowSize = this.searchInfo.infoRow.length
+            this.searchInfo.viewRowSize = this.infoRow.length
           } else {
             // eslint-disable-next-line vue/no-mutating-props
             this.searchInfo.viewRowSize = 1
@@ -134,6 +147,9 @@ export default {
 
 <style lang="scss">
 .searchModel {
+  .el-form{
+    display: block;
+  }
   .extend {
     padding: 0 10px;
     font-size: 13px;

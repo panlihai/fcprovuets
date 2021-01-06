@@ -1,5 +1,18 @@
 <template>
   <div>
+    <!-- 提示 -->
+    <template v-if="field.inputType !== 'check' && showlabel === true">
+      <el-tooltip
+        class="field"
+        effect="dark"
+        :content="field.description"
+        placement="left"
+        v-if="field.description"
+      >
+        <i class="el-icon-info"></i>
+      </el-tooltip>
+      <label v-text="field.fieldName" :title="fieldCode"/>
+    </template>
     <!-- 数值 -->
     <el-input-number
       :clearable="true"
@@ -8,18 +21,18 @@
       @click="click(field)"
       @dblclick="dblclick(field)"
       @blur="blur(field)"
-      :disabled="field.readonly || false"
+      :disabled="field.readonly || field.disabled || false"
       :readonly="field.readonly || false"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请填写' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请填写' + field.fieldName):''"
+
     />
     <el-input-number
       :clearable="true"
       v-else-if="field.inputType === 'double'"
       precision="2"
-      :disabled="field.readonly || false"
+      :disabled="field.readonly || field.disabled || false"
       :readonly="field.readonly || false"
       v-model="mainObj[fieldCode]"
       @click="click(field)"
@@ -27,8 +40,7 @@
       @blur="blur(field)"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请填写' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请填写' + field.fieldName):''"
     />
     <el-date-picker
       :clearable="true"
@@ -36,14 +48,14 @@
       v-model="mainObj[fieldCode]"
       align="right"
       type="date"
+      :disabled="field.readonly || field.disabled || false"
       :readonly="field.readonly || false"
       @click="click(field)"
       @dblclick="dblclick(field)"
       @blur="blur(field)"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请选择' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请选择' + field.fieldName):''"
     >
     </el-date-picker>
     <el-date-picker
@@ -52,14 +64,14 @@
       v-model="mainObj[fieldCode]"
       type="datetime"
       align="right"
+      :disabled="field.readonly || field.disabled || false"
       :readonly="field.readonly || false"
       @click="click(field)"
       @dblclick="dblclick(field)"
       @blur="blur(field)"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请选择' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请选择' + field.fieldName):''"
     >
     </el-date-picker>
     <el-time-select
@@ -71,11 +83,11 @@
       @click="click(field)"
       @dblclick="dblclick(field)"
       @blur="blur(field)"
+      :disabled="field.readonly || field.disabled || false"
       :readonly="field.readonly || false"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请选择' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请选择' + field.fieldName):''"
     >
     </el-time-select>
     <!-- 大文本框 -->
@@ -83,6 +95,7 @@
       :clearable="true"
       v-else-if="field.inputType === 'textarea'"
       rows="2"
+      :disabled="field.disabled || false"
       :readonly="field.readonly || false"
       @click="click(field)"
       @dblclick="dblclick(field)"
@@ -90,8 +103,7 @@
       @focus="focus(field)"
       v-model="mainObj[fieldCode]"
       @change="valueChange(field, $event)"
-      :placeholder="'请输入' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请输入' + field.fieldName):''"
     />
     <!-- 弹出框 -->
     <el-input
@@ -99,15 +111,14 @@
       v-else-if="field.inputType === 'table'"
       prefix-icon="el-icon-search"
       v-model="mainObj[fieldCode]"
-      :disabled="field.readonly || false"
+      :disabled="field.readonly || field.disabled || false"
       readonly
       @click="click(field)"
       @dblclick="dblclick(field)"
       @blur="blur(field)"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请选择' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请选择' + field.fieldName):''"
     ></el-input>
     <!-- 弹出框 -->
     <el-input
@@ -115,26 +126,24 @@
       v-else-if="field.inputType === 'city'"
       prefix-icon="el-icon-search"
       v-model="mainObj[fieldCode]"
-      :disabled="field.readonly || false"
+      :disabled="field.readonly || field.disabled || false"
       readonly
       @click="click(field)"
       @dblclick="dblclick(field)"
       @blur="blur(field)"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :placeholder="'请选择' + field.fieldName"
-      :rules="rule"
+      :placeholder="field.placeholder===undefined?('请选择' + field.fieldName):''"
     ></el-input>
     <!-- 选择框 -->
     <el-select
       :clearable="true"
       v-else-if="field.inputType === 'select'"
       v-model="mainObj[fieldCode]"
-      :disabled="field.readonly || false"
+      :disabled="field.disabled || false"
       :readonly="field.readonly || false"
-      :placeholder="'请选择' + field.fieldName"
+      :placeholder="field.placeholder===undefined?('请选择' + field.fieldName):''"
       @change="valueChange(field, $event)"
-      :rules="rule"
     >
       <template v-if="field.dicCode">
         <el-option
@@ -150,10 +159,9 @@
       :clearable="true"
       v-else-if="field.inputType === 'check'"
       v-model="mainObj[fieldCode]"
-      :disabled="field.readonly || false"
+      :disabled="field.readonly || field.disabled || false"
       :readonly="field.readonly || false"
       @change="valueChange(field, $event)"
-      :rules="rule"
     ></el-checkbox>
     <!-- 多选框 -->
     <el-checkbox-group
@@ -161,9 +169,8 @@
       v-else-if="field.inputType === 'checkGroup'"
       v-model="mainObj[fieldCode]"
       :readonly="field.readonly || false"
-      :disabled="field.readonly || false"
+      :disabled="field.readonly || field.disabled || false"
       @change="valueChange(field, $event)"
-      :rules="rule"
     >
       <template v-if="field.dicCode">
         <el-checkbox
@@ -181,10 +188,9 @@
       :show-file-list="true"
       :auto-upload="false"
       :readonly="field.readonly || false"
-      :disabled="field.readonly || false"
+      :disabled="field.readonly || field.disabled ||false"
       :on-change="getFile"
       :on-remove="removeFile"
-      :rules="rule"
     >
       <i class="el-icon-plus avatar-uploader-icon"></i>
     </el-upload>
@@ -215,12 +221,12 @@
       @click="click(field)"
       @dblclick="dblclick(field)"
       @blur="blur(field)"
+      :disabled="field.disabled || false"
       :readonly="field.readonly || false"
       @focus="focus(field)"
       @change="valueChange(field, $event)"
-      :title="'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
-      :placeholder="placeholder===''?('请输入' + field.fieldName):''"
-      :rules="rule"
+      :title="field.placeholder||'请输入'+field.fieldName+' '+ (field.description||'') + ' ' + (field.help||'')"
+      :placeholder="field.placeholder===undefined?('请输入' + field.fieldName):''"
     />
   </div>
 </template>
@@ -232,7 +238,7 @@ export default {
       type: Object,
       default: () => ({})
     },
-    rule: {
+    rules: {
       type: Object,
       default: () => ({})
     },
@@ -261,8 +267,7 @@ export default {
   },
   data () {
     return {
-      // 数据对象
-      mainObj: {},
+      mainObj: this.value,
       // 查询条件
       searchObj: {},
       // 弹窗多选的
@@ -294,16 +299,25 @@ export default {
       ],
       select: {
       },
-      fieldCode: ''
+      fieldCode: '',
+      rule: this.rules
+    }
+  },
+  watch: {
+    rules: {
+      handler () {
+        this.rule = this.rules
+      },
+      deep: true,
+      immediate: true
     }
   },
   /**
    * 数据初始化 字典初始化
    */
   created () {
-    this.mainObj = { ...this.value }
     const promiseAll = []
-    this.fieldCode = this.field.tableName === undefined ? this.field.fieldCode : (`${this.field.tableName}.${this.field.fieldCode}`)
+    this.fieldCode = this.field.tableName === undefined ? this.field.fieldCode : (`${this.field.tableName}___${this.field.fieldCode}`)
     const fields = [this.field]
     switch (this.field.inputType) {
       case 'combo':
@@ -311,9 +325,9 @@ export default {
       case 'select':
         promiseAll.push(
           this.$http.get(
-            this.data.requesturl,
-            this.data.requestparam || {},
-            this.data.requestbody || {}
+            this.field.requesturl,
+            this.field.requestparam || {},
+            this.field.requestbody || {}
           )
         )
         break
@@ -351,12 +365,6 @@ export default {
       })
     })
   },
-  computed: {},
-  watch: {
-    value () {
-      this.mainObj = { ...this.value }
-    }
-  },
   methods: {
     // 查询条件展开及收起
     searchShow ($event) {
@@ -376,7 +384,7 @@ export default {
     valueChange (field, value) {
       const change = {}
       change[this.fieldCode] = value
-      this.event('change', `${field.fieldName}值修改`, { change, from: this.mainObj[this.fieldCode], to: value })
+      this.event('change', `${field.fieldName}值修改`, { change, from: this.mainObj[this.field.fieldCode], to: value })
     },
     /**
      * 新增文件时候转换为base64，

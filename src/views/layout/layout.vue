@@ -4,8 +4,10 @@
       <fcheader></fcheader>
     </el-header>
     <el-container>
-      <el-aside width="200px"><fcmenu></fcmenu></el-aside>
-      <el-main>
+      <el-aside width="218px" :style="{backgroundColor: 'rgb(84, 92, 100)',height: height}" >
+        <fcmenu></fcmenu>
+      </el-aside>
+      <el-main :style="{height: height, padding: '0px 5px'}">
         <el-tabs v-model="activetab" @tab-remove="removeTab" @tab-click="selectedTab">
           <el-tab-pane
             v-for="item in tabs"
@@ -14,9 +16,10 @@
             :name="item.name"
             :closable="item.name !== 'home'"
           >
+          <component :is="item.content" :param="item.meta"></component>
           </el-tab-pane>
         </el-tabs>
-        <keep-alive><router-view></router-view></keep-alive>
+        <!-- <keep-alive><router-view></router-view></keep-alive> -->
       </el-main>
     </el-container>
   </el-container>
@@ -49,13 +52,9 @@ export default defineComponent({
       }
     })
   },
-  data: () => {
-    return {
-      activetab: 'home'
-    }
-  },
   setup: () => {
     const router = useRouter()
+    const height = window.innerHeight - 60
     const navigate = (menu: any) => {
       store.dispatch('system/tabspush', {
         title: menu.MENUNAME,
@@ -71,14 +70,15 @@ export default defineComponent({
       }
     }
     return {
-      navigate
+      navigate,
+      height: height + 'px'
     }
   },
   methods: {
     selectedTab (tab: any) {
       console.log(tab.props.name)
       store.dispatch('system/activetab', tab.props.name)
-      this.navigate(this.findMenu(tab.props.name))
+      // this.navigate(this.findMenu(tab.props.name))
     },
     removeTab (tabname: string) {
       store.dispatch('system/removetab', tabname)
@@ -106,5 +106,17 @@ export default defineComponent({
 <style>
 .el-header {
   padding: 0px;
+}
+::-webkit-scrollbar{
+  width: 2px;
+  height: 2px;
+}
+::-webkit-scrollbar-track{
+  border-radius: 1px;
+  background-color: #efefef;
+}
+::-webkit-scrollbar-thumb{
+  border-radius: 1px;
+  background-color: #18ab8f;
 }
 </style>

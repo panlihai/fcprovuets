@@ -6,7 +6,7 @@
       label-position="right"
       ref="form"
       :model="mainObj"
-      :rules="rules"
+      :rules="rule"
     >
       <template v-if="inforow && inforow.length !== 0">
         <el-row v-for="(row, rowIndex) of inforow" :key="rowIndex">
@@ -17,7 +17,7 @@
           >
             <el-form-item
               :label="field.fieldName"
-              :prop="field.fieldCode"
+              :prop="field.tableName+'___'+field.fieldCode"
               :class="field.inputType"
               @click="labelClick(field)"
               :required="field.isrequired === true"
@@ -28,14 +28,15 @@
                 @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
-                @change="valueChange(field, $event)">
+                @change="valueChange(field, $event)"
+                :rules="rule">
               </fcbasefield>
             </el-form-item>
           </el-col>
         </el-row>
       </template>
     </el-form>
-    <slot name="baseform"></slot>
+    <slot name="formchild"></slot>
     <el-dialog
       :title="dialogTitle"
       :visible="dialogVisible"
@@ -93,7 +94,7 @@ export default {
       // 模型
       vm: { ...ViewModel },
       // 数据对象
-      mainObj: {},
+      mainObj: this.value,
       // 查询条件
       searchObj: {},
       // 弹窗多选的
@@ -122,58 +123,17 @@ export default {
           btnName: '关闭',
           btnAct: 'close'
         }
-      ]
+      ],
+      rule: this.rules
     }
   },
-  /**
-   * 数据初始化 字典初始化
-   */
-  created () {
-    this.mainObj = { ...this.value }
-    const promiseAll = []
-    const fields = []
-    this.inforow.forEach((field) => {
-      switch (field.inputType) {
-        case 'combo':
-        case 'radio':
-        case 'select':
-          fields.push(field)
-          promiseAll.push(this.$http.get(this.data.requesturl, this.data.requestparam || {}, this.data.requestbody || {}))
-          break
-        default:
-      }
-    })
-    Promise.all(promiseAll).then((results) => {
-      results.forEach((result, index) => {
-        const fld = fields[index]
-        if (result[fld.selectedkeymap.resultNodeCode] === fld.selectedkeymap.resultCodeValue) {
-          const option = []
-          if (fld.selectedkeymap.childNodeName) {
-            // 取出list的值作为列表
-            result[fld.selectedkeymap.parentNodeName][fld.selectedkeymap.childNodeName].forEach((item) => {
-              option.push({
-                label: item[fld.selectedkeymap.labelCode],
-                value: item[fld.selectedkeymap.valueCode]
-              })
-            })
-          } else {
-            // 取出list的值作为列表
-            result[fld.selectedkeymap.parentNodeName].forEach((item) => {
-              option.push({
-                label: item[fld.selectedkeymap.labelCode],
-                value: item[fld.selectedkeymap.valueCode]
-              })
-            })
-          }
-          this.vm.select[fld.dicCode] = option
-        }
-      })
-    })
-  },
-  computed: {},
   watch: {
-    value () {
-      this.mainObj = { ...this.value }
+    rules: {
+      handler () {
+        this.rule = this.rules
+      },
+      deep: true,
+      immediate: true
     }
   },
   methods: {
@@ -184,8 +144,7 @@ export default {
     /**
      * 弹窗准备数据
      */
-    openDialog (field) {
-      console.log(field)
+    openDialog () {
       this.dialogVm = {
         fields: [],
         searchInfo: {
