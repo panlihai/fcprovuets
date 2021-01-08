@@ -44,7 +44,7 @@
                   :key="btnIndex"
                   size="mini"
                   @click="groupToolbar(model, btn)"
-                  >{{ $t(btn.btnName) }}</span
+                  >{{btn.btnName}}</span
                 >
               </div>
               <i
@@ -61,6 +61,7 @@
               :inforow="model.infoRow"
               :rules="model.ruleInfo"
               :name="model.gldGroupCode"
+              :select="select"
               @labelclick="fieldLabelClick(model, mainObj, $event)"
               @click="fieldClick(model, mainObj, $event)"
               @dblclick="fieldDblclick(model, mainObj, $event)"
@@ -119,7 +120,7 @@
                       :key="cbtnIndex"
                       size="mini"
                       @click="groupToolbar(cmodel, cbtn)"
-                      >{{ $t(cbtn.btnName) }}</span
+                      >{{cbtn.btnName}}</span
                     >
                   </div>
                   <i
@@ -142,6 +143,7 @@
                   "
                 >
                   <fcbaseform
+                    :select="select"
                     v-for="(data, cindex) of cmodel.data"
                     :key="cindex"
                     :value="data"
@@ -197,6 +199,7 @@
                       <fcbaseform
                         v-for="(data, cindex) of cmodel.data"
                         :key="cindex"
+                        :select="select"
                         :value="data"
                         :inforow="cmodel.infoRow"
                         :rules="cmodel.ruleInfo"
@@ -249,6 +252,7 @@
             <div class="grpContent">
               <fcbaseform
                 :value="mainObj"
+                :select="select"
                 :inforow="model.infoRow"
                 :rules="model.ruleInfo"
                 :name="model.gldGroupCode"
@@ -314,6 +318,7 @@
               >
                 <fcbaseform
                   v-for="(data, cindex) of cmodel.data"
+                  :select="select"
                   :key="cindex"
                   :value="data"
                   :inforow="cmodel.infoRow"
@@ -367,6 +372,7 @@
                   >
                     <fcbaseform
                       v-for="(data, cindex) of cmodel.data"
+                      :select="select"
                       :key="cindex"
                       :value="data"
                       :inforow="cmodel.infoRow"
@@ -428,7 +434,7 @@
                         :key="cbtnIndex"
                         size="mini"
                         @click="groupToolbar(ccmodel, cbtn)"
-                        >{{ $t(cbtn.btnName) }}</span
+                        >{{cbtn.btnName}}</span
                       >
                     </div>
                     <i
@@ -453,6 +459,7 @@
                   >
                     <fcbaseform
                       v-for="(data, cindex) of ccmodel.data"
+                      :select="select"
                       :key="cindex"
                       :value="data"
                       :inforow="ccmodel.infoRow"
@@ -508,6 +515,7 @@
                       >
                         <fcbaseform
                           v-for="(data, cindex) of ccmodel.data"
+                          :select="select"
                           :key="cindex"
                           :value="data"
                           :inforow="ccmodel.infoRow"
@@ -599,7 +607,7 @@
                   :key="btnIndex"
                   size="mini"
                   @click="groupToolbar(model, btn)"
-                  >{{ $t(btn.btnName) }}</span
+                  >{{btn.btnName}}</span
                 >
               </div>
               <i
@@ -613,6 +621,7 @@
           <div class="grpContent" :hidden="formInfo.fldGroupOpen === false">
             <fcbaseform
               :value="mainObj"
+              :select="select"
               :inforow="model.infoRow"
               :rules="model.ruleInfo"
               :name="model.gldGroupCode"
@@ -656,6 +665,7 @@
               >
                 <fcbaseform
                   v-for="(data, cindex) of cmodel.data"
+                  :select="select"
                   :key="cindex"
                   :value="data"
                   :inforow="cmodel.infoRow"
@@ -710,6 +720,7 @@
                     <fcbaseform
                       v-for="(data, cindex) of cmodel.data"
                       :key="cindex"
+                      :select="select"
                       :value="data"
                       :inforow="cmodel.infoRow"
                       :rules="cmodel.ruleInfo"
@@ -770,7 +781,7 @@
                         :key="cbtnIndex"
                         size="mini"
                         @click="groupToolbar(ccmodel, cbtn)"
-                        >{{ $t(cbtn.btnName) }}</span
+                        >{{cbtn.btnName}}</span
                       >
                     </div>
                     <i
@@ -796,6 +807,7 @@
                     <fcbaseform
                       v-for="(data, cindex) of ccmodel.data"
                       :key="cindex"
+                      :select="select"
                       :value="data"
                       :inforow="ccmodel.infoRow"
                       :rules="ccmodel.ruleInfo"
@@ -852,6 +864,7 @@
                           v-for="(data, cindex) of ccmodel.data"
                           :key="cindex"
                           :value="data"
+                          :select="select"
                           :inforow="ccmodel.infoRow"
                           :rules="ccmodel.ruleInfo"
                           :name="ccmodel.gldGroupCode"
@@ -918,6 +931,7 @@ import ViewModel from './list-form'
 import fcbaseform from './baseform'
 import fctable from './table'
 import fctoolbar from './toolbar'
+import Model from '@/api/model'
 
 export default {
   name: 'fcform',
@@ -942,6 +956,10 @@ export default {
     value: {
       type: Object,
       default: () => ({})
+    },
+    select: {
+      type: Object,
+      default: () => ({})
     }
   },
   computed: {
@@ -961,6 +979,22 @@ export default {
       this.mainObj = this.value
     }
   },
+  created () {
+    const id = this.value[this.formInfo.fldGroupCode + '___ID']
+    const listinfo = []
+    this.formInfo.children.forEach(child => {
+      listinfo.push({ AID: child.fldGroupCode })
+    })
+    Model.Infolist(this.formInfo.fldGroupCode, { id: id, DETAILLIST: encodeURIComponent(JSON.stringify(listinfo)) }).then((result) => {
+      try {
+        if (result.CODE === '0') {
+          console.log(result)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    })
+  },
   methods: {
     /**
      * 初始化内容
@@ -973,8 +1007,7 @@ export default {
      * 点击显示或隐藏分组或分区
      */
     showLine (grp) {
-      grp.fldGroupOpen = !grp.fldGroupOpen
-      this.event('titleclick', '显示隐藏', { grp })
+      this.event('titleopenclick', '显示隐藏', { grp, btn: { btnAct: 'closeTitle' } })
     },
     /**
      * 分组工具栏事件

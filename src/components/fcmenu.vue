@@ -75,31 +75,31 @@ export default defineComponent({
   computed: {
     ...mapState('system', {
       value: (state: any) => state.sysmenus
+    }),
+    ...mapState('model', {
+      model: (state: any) => state
     })
   },
-  setup () {
-    // const router = useRouter()
-    const navigate = (menu: any) => {
-      store.dispatch('model/initapp', { AID: menu.APPID }).then(() => {
+  methods: {
+    navigate (menu: any) {
+      if (menu.APPID && this.model[menu.APPID] === undefined) {
+        store.dispatch('model/initapp', { AID: menu.APPID }).then(() => {
+          store.dispatch('system/tabspush', {
+            title: menu.MENUNAME,
+            name: menu.MENUID,
+            content: require('./ad/func').default,
+            meta: { ...menu }
+          })
+        })
+      } else {
         store.dispatch('system/tabspush', {
           title: menu.MENUNAME,
           name: menu.MENUID,
           content: require('./ad/func').default,
           meta: { ...menu }
         })
-      })
-      // if (router) {
-      //   router.push({
-      //     name: 'listinfo',
-      //     params: menu
-      //   })
-      // }
+      }
     }
-    return {
-      navigate
-    }
-  },
-  methods: {
   }
 })
 </script>

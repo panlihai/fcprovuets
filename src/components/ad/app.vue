@@ -8,14 +8,14 @@
 <template>
   <div class="app">
     <div class="search">
-      <fcsearch :searchInfo="vm.searchInfo" :value="searchObj" @toolbar="queryToolbar" @change="queryToolbar"></fcsearch>
+      <fcsearch :searchInfo="model.searchInfo" :value="searchObj" @toolbar="queryToolbar" @change="queryToolbar" :select="model.select"></fcsearch>
     </div>
     <div class="toolbar">
-      <fctoolbar @click="toolbar" :toolbar="vm.tableInfo.toolbar"></fctoolbar>
+      <fctoolbar @click="toolbar" :toolbar="model.tableInfo.toolbar"></fctoolbar>
     </div>
     <div class="table" :style="{height:tableHeight+'px'}">
       <div class="tree" v-if="false">
-        <div  v-for="(field, index) of vm.tableInfo.fields" :key="index">
+        <div  v-for="(field, index) of model.tableInfo.fields" :key="index">
           <template v-if="field.dicCode!==null">
             <label :text="field.fieldName"></label>
             <el-tree
@@ -29,8 +29,8 @@
         </div>
       </div>
       <div class="content">
-        <fctable :tableInfo="vm.tableInfo" :height="tableHeight" :width="tableWidth" :isloading="isLoading"
-          :value="value" @toolbar="tableToolbar" @cellclick="tableCellClick"
+        <fctable :tableInfo="model.tableInfo" :height="tableHeight" :width="tableWidth" :isloading="isLoading"
+          :value="value" @toolbar="tableToolbar" @cellclick="tableCellClick" :select="model.select"
           @celldblclick="tableCellDblClick" @rowclick="tableRowClick" @rowdblclick="tableRowDblClick"
           @sortchange="tableSortChange" @headerclick="tableHeaderClick" @rowcontextmenu="tableRowContextmenu"
           @headercontextmenu="tableHeaderContextmenu" @selectionchange="tableSelectionChange" @selectall="tableSelectAll"
@@ -38,21 +38,21 @@
       </div>
     </div>
     <div class="footer">
-      <el-pagination v-if="vm.tableInfo.pagination==='out'"
+      <el-pagination v-if="model.tableInfo.pagination==='out'"
         @size-change="pageSizeChange"
         @current-change="pageNumChange"
         @prev-click="prevPage"
         @next-click="nextPage"
-        :current-page="vm.tableInfo.pageNum"
+        :current-page="model.tableInfo.pageNum"
         :page-sizes="[20, 50, 100, 200, 300, 500, 1000]"
-        :page-size="vm.tableInfo.pageSize"
+        :page-size="model.tableInfo.pageSize"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="vm.tableInfo.totalSize">
+        :total="model.tableInfo.totalSize">
       </el-pagination>
     </div>
-    <el-dialog v-dialogDrag fullscreen :title="vm.tableInfo.title" :visible="formShow===true" width="100%" height="100%" :before-close="formClose">
-      <fcform v-if="formShow===true" :formInfo="vm.formInfo" :value="selectedObj"
-        @grouptoolbar="formGroupToolbar" @toolbar="formToolbar"
+    <el-dialog fullscreen :title="model.tableInfo.title" v-model="model.formInfo.formShow" width="100%" height="100%" :before-close="formClose">
+      <fcform v-if="model.formInfo.formShow" :formInfo="model.formInfo" :value="selectedObj" :select="model.select"
+        @grouptoolbar="formGroupToolbar" @toolbar="formToolbar" @titleopenclick="formGroupToolbar"
         @labelclick="formFieldLabelClick" @click="formFieldClick" @tabletoolbar="formTableToolbar"
         @blur="formFieldBlur" @focus="formFieldFocus" @change="formFieldValueChange"
         @tablecellclick="formTableCellClick" @tablecelldblclick="formTableCellDblClick" @tablerowclick="formTableRowClick"
@@ -73,13 +73,13 @@
       <template #footer>
         <fctoolbar
           @click="formToolbar($event.btn)"
-          :toolbar="vm.formInfo.toolbar"
+          :toolbar="model.formInfo.toolbar"
         ></fctoolbar>
       </template>
     </el-dialog>
-    <el-dialog fullscreen v-dialogDrag :title="vm.tableInfo.title" :visible="viewShow===true" width="100%" :before-close="viewClose">
-      <fcview v-if="viewShow===true" :formInfo="vm.viewInfo" :value="selectedObj"
-        @grouptoolbar="formGroupToolbar" @toolbar="viewToolbar"
+    <el-dialog fullscreen :title="model.tableInfo.title" :visible="model.viewInfo.formShow" width="100%" :before-close="viewClose">
+      <fcview v-if="model.viewInfo.formShow" :formInfo="model.viewInfo" :value="selectedObj" :select="model.select"
+        @grouptoolbar="formGroupToolbar" @toolbar="viewToolbar"  @titleopenclick="formGroupToolbar"
         @labelclick="formFieldLabelClick" @click="formFieldClick" @tabletoolbar="formTableToolbar"
         @blur="formFieldBlur" @focus="formFieldFocus" @change="formFieldValueChange"
         @tablecellclick="formTableCellClick" @tablecelldblclick="formTableCellDblClick" @tablerowclick="formTableRowClick"
@@ -99,7 +99,7 @@
       <template #footer>
         <fctoolbar
           @click="viewToolbar($event.btn)"
-          :toolbar="vm.viewInfo.toolbar"
+          :toolbar="model.viewInfo.toolbar"
         ></fctoolbar>
       </template>
     </el-dialog>
@@ -107,12 +107,12 @@
 </template>
 
 <script>
-import ViewModel from './list-form'
 import fcform from './form'
 import fctoolbar from './toolbar'
 import fcview from './view'
 import fcsearch from './search'
 import fctable from './table'
+import { mapState } from 'vuex'
 
 const tableevent = 'tableevent'
 const toolbarevent = 'toolbarevent'
@@ -130,17 +130,6 @@ export default {
     fctoolbar
   },
   props: {
-    model: {
-      type: Object,
-      default: () => ({
-        formInfo: {
-          formShow: false
-        },
-        viewInfo: {
-          viewShow: false
-        }
-      })
-    },
     height: {
       type: Number,
       default: () => document.body.clientHeight - 175
@@ -152,6 +141,10 @@ export default {
     value: {
       type: Array,
       default: () => ([])
+    },
+    modelid: {
+      type: String,
+      default: () => ''
     }
   },
   data () {
@@ -164,29 +157,20 @@ export default {
       selectGrp: {},
       // 选择的所有对象
       selectedObjs: [],
-      select: { ...ViewModel.select },
       isLoading: false,
-      formShow: false,
-      viewShow: false,
       tableHeight: this.height,
       tableWidth: this.width
     }
   },
   watch: {
     model () {
-      if (this.model.formInfo) {
-        this.formShow = this.model.formInfo.formShow || false
-      }
-      if (this.model.viewInfo) {
-        this.viewShow = this.model.viewInfo.formShow || false
-      }
-      if (this.formShow === true) {
+      if (this.model && this.model.formInfo && this.model.formInfo.formShow) {
         this.selectGrp = this.model.formInfo
-        this.selectedObj = this.getInnerValue(this.value[0])
+        // this.selectedObj = this.getInnerValue(this.value[0])
       }
-      if (this.viewShow === true) {
+      if (this.model && this.model.viewInfo && this.model.viewInfo.formShow) {
         this.selectGrp = this.model.viewInfo
-        this.selectedObj = this.getInnerValue(this.value[0])
+        // this.selectedObj = this.getInnerValue(this.value[0])
       }
     },
     height () {
@@ -197,8 +181,11 @@ export default {
     }
   },
   computed: {
-    vm () {
-      return { ...ViewModel, ...this.model }
+    ...mapState('model', {
+      vm: (state) => state
+    }),
+    model () {
+      return this.vm[this.modelid]
     }
   },
   methods: {
@@ -251,13 +238,15 @@ export default {
      * 查看窗口关闭
      */
     viewClose () {
-      this.viewShow = false
+      this.event(viewevent, 'close', {})
+      this.selectedObj = {}
     },
     /**
      * 编辑窗口关闭
      */
     formClose () {
-      this.formShow = false
+      this.event(formevent, 'close', {})
+      this.selectedObj = {}
     },
     /**
      * 表单内容列表的工具栏事件
@@ -325,7 +314,7 @@ export default {
       param.selectedObjs = [param.value]
       switch (param.eventname) {
         case 'viewOne':
-          this.formShow = true
+          this.innerFormShow = true
           break
         default:
       }
@@ -445,8 +434,8 @@ export default {
      */
     tablePageChange (param) {
       param.fldGroupCode = this.model.tableInfo.fldGroupCode
-      this.vm.tableInfo.pageNum = param.pageNum
-      this.vm.tableInfo.pageSize = param.pageSize
+      this.model.tableInfo.pageNum = param.pageNum
+      this.model.tableInfo.pageSize = param.pageSize
       if (this.query) {
         this.query()
       }
@@ -555,8 +544,8 @@ export default {
      * 表单中列表分页改变的时候
      */
     formTablePageChange (param) {
-      this.vm.tableInfo.pageNum = param.pageNum
-      this.vm.tableInfo.pageSize = param.pageSize
+      this.model.tableInfo.pageNum = param.pageNum
+      this.model.tableInfo.pageSize = param.pageSize
       if (this.query) {
         this.query()
       }
@@ -581,8 +570,6 @@ export default {
     background-color: #f1f1f1;
   }
   flex-direction: column;
-  .search {
-  }
   .table {
     flex: 1;
     display: flex;

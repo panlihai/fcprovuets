@@ -1,18 +1,5 @@
 <template>
   <div>
-    <!-- 提示 -->
-    <template v-if="field.inputType !== 'check' && showlabel === true">
-      <el-tooltip
-        class="field"
-        effect="dark"
-        :content="field.description"
-        placement="left"
-        v-if="field.description"
-      >
-        <i class="el-icon-info"></i>
-      </el-tooltip>
-      <label v-text="field.fieldName" :title="fieldCode"/>
-    </template>
     <!-- 数值 -->
     <el-input-number
       :clearable="true"
@@ -136,6 +123,12 @@
       :placeholder="field.placeholder===undefined?('请选择' + field.fieldName):''"
     ></el-input>
     <!-- 选择框 -->
+    <el-radio-group
+     v-model="mainObj[fieldCode]"
+     v-else-if="field.inputType === 'radio'">
+       <el-radio v-for="opt of select[field.dicCode]" :label="opt.value"
+          :key="opt.value">{{opt.label}}</el-radio>
+    </el-radio-group>
     <el-select
       :clearable="true"
       v-else-if="field.inputType === 'select'"
@@ -263,6 +256,10 @@ export default {
     maxrow: {
       type: Number,
       default: () => 1
+    },
+    select: {
+      type: Object,
+      default: () => ({})
     }
   },
   data () {
@@ -297,8 +294,6 @@ export default {
           btnAct: 'close'
         }
       ],
-      select: {
-      },
       fieldCode: '',
       rule: this.rules
     }
@@ -307,6 +302,13 @@ export default {
     rules: {
       handler () {
         this.rule = this.rules
+      },
+      deep: true,
+      immediate: true
+    },
+    select: {
+      handler () {
+        console.log(this.select)
       },
       deep: true,
       immediate: true
@@ -319,51 +321,51 @@ export default {
     const promiseAll = []
     this.fieldCode = this.field.tableName === undefined ? this.field.fieldCode : (`${this.field.tableName}___${this.field.fieldCode}`)
     const fields = [this.field]
-    switch (this.field.inputType) {
-      case 'combo':
-      case 'radio':
-      case 'select':
-        promiseAll.push(
-          this.$http.get(
-            this.field.requesturl,
-            this.field.requestparam || {},
-            this.field.requestbody || {}
-          )
-        )
-        break
-      default:
-    }
-    Promise.all(promiseAll).then((results) => {
-      results.forEach((result, index) => {
-        const fld = fields[index]
-        if (
-          result[fld.selectedkeymap.resultNodeCode] ===
-          fld.selectedkeymap.resultCodeValue
-        ) {
-          const option = []
-          if (fld.selectedkeymap.childNodeName) {
-            // 取出list的值作为列表
-            result[fld.selectedkeymap.parentNodeName][
-              fld.selectedkeymap.childNodeName
-            ].forEach((item) => {
-              option.push({
-                label: item[fld.selectedkeymap.labelCode],
-                value: item[fld.selectedkeymap.valueCode]
-              })
-            })
-          } else {
-            // 取出list的值作为列表
-            result[fld.selectedkeymap.parentNodeName].forEach((item) => {
-              option.push({
-                label: item[fld.selectedkeymap.labelCode],
-                value: item[fld.selectedkeymap.valueCode]
-              })
-            })
-          }
-          this.select[fld.dicCode] = option
-        }
-      })
-    })
+    // switch (this.field.inputType) {
+    //   case 'combo':
+    //   case 'radio':
+    //   case 'select':
+    //     promiseAll.push(
+    //       this.$http.get(
+    //         this.field.requesturl,
+    //         this.field.requestparam || {},
+    //         this.field.requestbody || {}
+    //       )
+    //     )
+    //     break
+    //   default:
+    // }
+    // Promise.all(promiseAll).then((results) => {
+    //   results.forEach((result, index) => {
+    //     const fld = fields[index]
+    //     if (
+    //       result[fld.selectedkeymap.resultNodeCode] ===
+    //       fld.selectedkeymap.resultCodeValue
+    //     ) {
+    //       const option = []
+    //       if (fld.selectedkeymap.childNodeName) {
+    //         // 取出list的值作为列表
+    //         result[fld.selectedkeymap.parentNodeName][
+    //           fld.selectedkeymap.childNodeName
+    //         ].forEach((item) => {
+    //           option.push({
+    //             label: item[fld.selectedkeymap.labelCode],
+    //             value: item[fld.selectedkeymap.valueCode]
+    //           })
+    //         })
+    //       } else {
+    //         // 取出list的值作为列表
+    //         result[fld.selectedkeymap.parentNodeName].forEach((item) => {
+    //           option.push({
+    //             label: item[fld.selectedkeymap.labelCode],
+    //             value: item[fld.selectedkeymap.valueCode]
+    //           })
+    //         })
+    //       }
+    //       this.select[fld.dicCode] = option
+    //     }
+    //   })
+    // })
   },
   methods: {
     // 查询条件展开及收起

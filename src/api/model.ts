@@ -123,7 +123,7 @@ export default {
       // 是否只读
       readonly: f.ISVIRTUAL === 'Y',
       // 是否禁用
-      disabled: f.ENABLE === 'Y',
+      disabled: f.ENABLE !== 'Y',
       // 页面内容格式化
       format: f.VIEWFORMAT,
       // 最大长度 默认为数据库的长度
@@ -190,7 +190,7 @@ export default {
       // 子表列表渲染方式 tab：tab页方式（横向）；list：列表方式(纵向) tablist: 先list后tab
       childViewType: 'list',
       // viewType为form时有效，表单列数
-      columnSize: app.CARDCOLS || 4,
+      columnSize: app.CARDCOLS || 3,
       // 编辑样式，listEdit为列表编辑，listFormEdit为列表表单，dialogEdit为弹窗编辑form
       editType: 'listEdit',
       // 列表批量编辑  viewType为links有效
@@ -284,8 +284,8 @@ export default {
   },
   toSelect (app: any) {
     const select: any = {}
-    if (app.SYSAPPDIC) {
-      app.SYSAPPDIC.forEach((dic: any) => {
+    if (app.SYSDIC) {
+      app.SYSDIC.forEach((dic: any) => {
         if (dic.DICTYPE === 'LISTVALUE') {
           const dicdetail: any[] = []
           dic.SYSDICDETAIL.forEach((de: any) => {
@@ -308,7 +308,7 @@ export default {
    * 把模型转成model
    * @param {*} app 模型
    */
-  toLinkApp (app: any) {
+  toLinkApp (app: any, children: any[]) {
     const fields: any = {}
     const listFields: any[] = []
     const formFields: any[] = []
@@ -333,13 +333,21 @@ export default {
     const listOneToolbar = this.toToolbar(app, 'LISTONE')
     const fieldToolbar = this.toToolbar(app, 'CARD')
     const tableInfo = this.toGrp(app, fields, listFields, listOneToolbar, listToolbar)
-    const viewInfo = this.toGrp(app, fields, formFields, [], [{
-      btnCode: 'btnSave',
-      btnName: '关闭',
-      btnAct: 'close',
-      bustype: 'close'
-    }])
-    const formInfo = this.toGrp(app, fields, formFields, fieldToolbar, [])
+    const viewInfo = {
+      ...this.toGrp(app, fields, formFields, [], [{
+        btnCode: 'btnSave',
+        btnName: '关闭',
+        btnAct: 'close',
+        bustype: 'close'
+      }]),
+      viewType: 'form',
+      children
+    }
+    const formInfo = {
+      ...this.toGrp(app, fields, formFields, fieldToolbar, []),
+      viewType: 'form',
+      children
+    }
     const searchInfo = this.toGrp(app, searchFields, [], fieldToolbar, [
       {
         btnCode: 'btnQuery',
@@ -364,6 +372,9 @@ export default {
     }
   },
   toTable (app: any) {
+    if (app === undefined) {
+      return undefined
+    }
     const fields: any = {}
     const listFields: any[] = []
     app.SYSAPPFIELDS.forEach((f: any) => {

@@ -1727,8 +1727,9 @@ function initSearchModel (group = {}, isOpen) {
   let cols = []
   let columns = 0
   const span = 24 / (group.columnSize || 3)
-  if (group.fields) {
-    group.fields.forEach((field) => {
+  if (group.fields && group.fields.length !== 0) {
+    group.fields.forEach((f) => {
+      const field = { ...f }
       // 第一行末尾 先加入查询及重置按钮，在新的一行加入当前遍历字段
       if (isOpen === false && columns === group.columnSize - 1 && row.length === 0) {
         cols.push({ inputType: 'searchBtn', span })
@@ -1796,9 +1797,10 @@ function initFormOneModel (group = {}) {
   const row = []
   let cols = []
   let columns = 0
-  group.fldGroup[0].fields.forEach((field) => {
+  group.fldGroup[0].fields.forEach((f) => {
+    const field = { ...f }
     // 隐藏字段配置中如果没有属性或属性值为false的时候显示该字段
-    if (group.hiddenFields[field.fieldCode] === undefined || group.hiddenFields[field.fieldCode] === false) {
+    if (group.hiddenFields === undefined || (group.hiddenFields && (group.hiddenFields[field.fieldCode] === undefined || group.hiddenFields[field.fieldCode] === false))) {
       if (getCols(columns, field, group) === false) {
         if (cols.length !== 0) {
           row.push([...cols])
@@ -1814,16 +1816,16 @@ function initFormOneModel (group = {}) {
           cols.push({
             ...group.children[0].fields[field.fieldCode],
             ...field,
-            ...group.requiredFields[field.fieldCode], // 覆盖必填
-            ...group.readonlyFields[field.fieldCode] // 覆盖只读
+            ...group.requiredFields !== undefined ? group.requiredFields[field.fieldCode] : {}, // 覆盖必填
+            ...group.readonlyFields !== undefined ? group.readonlyFields[field.fieldCode] : {}// 覆盖只读
           })
         }
       } else {
         cols.push({
           ...group.fields[field.fieldCode],
           ...field,
-          ...group.requiredFields[field.fieldCode], // 覆盖必填
-          ...group.readonlyFields[field.fieldCode] // 覆盖只读
+          ...group.requiredFields !== undefined ? group.requiredFields[field.fieldCode] : {}, // 覆盖必填
+          ...group.readonlyFields !== undefined ? group.readonlyFields[field.fieldCode] : {}// 覆盖只读
         })
       }
     }
@@ -2012,30 +2014,30 @@ function initFormModel (group = {}) {
     if (group.children) {
       group.children.forEach((cgroup) => {
         // 获取只读字段
-        const creadonlyFields = {}
         if (cgroup.readonlyFieldCodes) {
           cgroup.readonlyFieldCodes.forEach((fieldCode) => {
-            creadonlyFields[fieldCode] = true
+            if (fieldCode && fieldCode !== '') {
+              cgroup.readonlyFields[fieldCode] = true
+            }
           })
         }
-        cgroup.readonlyFields = creadonlyFields
         // 获取隐藏字段
-        const chiddenFields = {}
         if (cgroup.hiddenFieldCodes) {
           cgroup.hiddenFieldCodes.forEach((fieldCode) => {
-            chiddenFields[fieldCode] = true
+            if (fieldCode && fieldCode !== '') {
+              cgroup.hiddenFields[fieldCode] = true
+            }
           })
         }
-        cgroup.hiddenFields = chiddenFields
-        const crequiredFields = {}
         // 获取只读字段
         if (cgroup.requiredFieldCodes) {
           cgroup.requiredFieldCodes.forEach((fieldCode) => {
-            crequiredFields[fieldCode] = { isrequired: true }
+            if (fieldCode && fieldCode !== '') {
+              cgroup.requiredFields[fieldCode] = { isrequired: true }
+            }
           })
         }
-        cgroup.requiredFields = crequiredFields
-        cgroup.infoRow = initFormOneModel(cgroup)
+        // initFormOneModel(cgroup)
       })
     }
   }

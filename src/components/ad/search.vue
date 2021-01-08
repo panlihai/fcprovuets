@@ -29,12 +29,12 @@
               class="search-form-item"
             >
               <fcbasefield :field="field" :value="mainObj" :showlabel="true" :maxrow="infoRow.length" :viewRowSize="searchInfo.viewRowSize"
-              @toolbar="toolbar"
-              @click="fieldClick(field)"
-              @dblclick="fieldDblclick(field)"
-              @blur="fieldBlur(field)"
-              @focus="fieldFocus(field)"
-              @change="valueChange(field, $event)"
+                @toolbar="toolbar"
+                @click="fieldClick(field)"
+                @dblclick="fieldDblclick(field)"
+                @blur="fieldBlur(field)"
+                @focus="fieldFocus(field)"
+                @change="valueChange(field, $event)"
               ></fcbasefield>
             </el-form-item>
           </el-col>

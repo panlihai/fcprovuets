@@ -9,7 +9,7 @@ const vueConfig = {
     proxy: {
       '/': {
         target: 'http://39.105.58.170:8080/server/api',
-        // target: 'http://192.168.1.138:8080/server',
+        // target: 'http://192.168.1.149:8080/server/api',
         ws: false,
         changeOrigin: true
       }

@@ -28,6 +28,7 @@
                 @dblclick="fieldDblclick(field)"
                 @blur="fieldBlur(field)"
                 @focus="fieldFocus(field)"
+                @select="select"
                 @change="valueChange(field, $event)"
                 :rules="rule">
               </fcbasefield>
@@ -44,7 +45,7 @@
       :before-close="dialogClose"
       append-to-body
     >
-      <fcsearch :model="dialogVm" :value="searchObj" @toolbar="queryToolbar" @change="queryToolbar"></fcsearch>
+      <fcsearch :model="dialogVm" :value="searchObj" @toolbar="queryToolbar" @change="queryToolbar" :select="model.select"></fcsearch>
       <fctable
         :model="dialogVm"
         :height="height"
@@ -87,6 +88,10 @@ export default {
     name: {
       type: String,
       default: () => ''
+    },
+    select: {
+      type: Object,
+      default: () => ({})
     }
   },
   data () {
@@ -131,6 +136,13 @@ export default {
     rules: {
       handler () {
         this.rule = this.rules
+      },
+      deep: true,
+      immediate: true
+    },
+    select: {
+      handler () {
+        console.log(this.select)
       },
       deep: true,
       immediate: true

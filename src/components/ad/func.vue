@@ -1,6 +1,6 @@
 <template>
   <div>
-    <fcapp :model="model" :height="height" :width="width" @formevent="formevent"
+    <fcapp :modelid="param.APPID" :value="data" :height="height" :width="width" @formevent="formevent"
      @viewevent="viewevent" @toolbarevent="toolbarevent" @queryevent="queryevent" @tableevent="tableevent">
     <template v-slot:formchild>
       </template>
@@ -82,6 +82,7 @@
 import { mapState } from 'vuex'
 import fcapp from './app'
 import Model from '@/api/model'
+import store from '@/store'
 // import { useRoute } from 'vue-router'
 export default {
   name: 'sysfunc',
@@ -105,11 +106,6 @@ export default {
   data () {
     return {
       fieldConfigShow: false,
-      model: {
-        searchInfo: {
-        },
-        tableInfo: {}
-      },
       // 表头字段
       parentFields: [],
       // 子表字典
@@ -127,48 +123,9 @@ export default {
       data: []
     }
   },
-  watch: {
-    /**
-     * 字段配置调整后重新计算
-     */
-    parentFields () {
-      const fieldstr = `${this.parentFields.join(',')},`
-      const group = this.model.formInfo
-      // 找到所有的表头字段
-      group.fldGroup[0].fields = []
-      Object.keys(group.fields).forEach((fieldCode) => {
-        if (fieldstr.indexOf(`${fieldCode},`) !== -1 || group.fields[fieldCode].tableName !== 'OP_BUSINESS_NOTE_LINES') {
-          group.fldGroup[0].fields.push({ fieldCode })
-        }
-      })
-      // 追加新移动过来的字段
-      this.parentFields.forEach((fieldCode) => {
-        // 判断是否存在，存在则不加入
-        const filter = group.fldGroup[0].fields.filter(
-          f => f === fieldCode
-        )
-        if (filter.length === 0) {
-          group.fldGroup[0].fields.push({ fieldCode })
-        }
-      })
-      // 找到行字段
-      group.children
-        .filter(cg => cg.fldGroupCode === 'appendInfo')
-        .forEach((cgroup) => {
-          // 追加新移动过来的字段
-          cgroup.fldGroup[0].fields = []
-          this.childFields
-            .filter(f => fieldstr.indexOf(`${f.key},`) === -1)
-            .forEach((f) => {
-              cgroup.fldGroup[0].fields.push({ fieldCode: f.key })
-            })
-        })
-      // this.model = { ...this.model }
-    }
-  },
   created () {
     // this.param = useRoute().params
-    this.model = this.allModel[this.param.APPID]
+    this.model = { ...this.allModel[this.param.APPID] }
     // 查询数据
     this.query()
     window.onresize = () => {
@@ -185,10 +142,10 @@ export default {
       console.log(`工具栏内部${param.desc || ''}`, param)
       switch (param.eventname) {
         // 点击新增
-        case 'add':
+        case 'listAdd':
           // 新增态
           this.status = '0'
-          this.handlerClick()
+          this.listAdd(param)
           break
         // 点击工具栏删除
         case 'delete':
@@ -210,8 +167,13 @@ export default {
       switch (param.eventname) {
         // 点击列表编辑
         case 'close':
-          this.model.formInfo.formShow = false
-          this.model = { ...this.model }
+          store.dispatch('model/setAppAttr', {
+            APPID: this.param.APPID,
+            key: 'formInfo',
+            value: {
+              formShow: false
+            }
+          })
           break
         // 点击列表编辑
         case 'edit':
@@ -260,6 +222,18 @@ export default {
             }
           }
           break
+        case 'titleopenclick':
+          store.dispatch('model/setAppFormClose', {
+            APPID: this.param.APPID,
+            key: 'viewInfo',
+            fldGroup: param.grp
+          })
+          store.dispatch('model/setAppFormClose', {
+            APPID: this.param.APPID,
+            key: 'formInfo',
+            fldGroup: param.grp
+          })
+          break
         default:
           console.log(`未处理事件${param.desc || ''}，事件名称${param.eventname}`, param)
       }
@@ -275,8 +249,13 @@ export default {
       switch (param.eventname) {
         // 点击列表编辑
         case 'close':
-          this.model.viewInfo.formShow = false
-          this.model = { ...this.model }
+          store.dispatch('model/setAppAttr', {
+            APPID: this.param.APPID,
+            key: 'viewInfo',
+            value: {
+              formShow: false
+            }
+          })
           break
         default:
           console.log(`未处理事件${param.desc || ''}，事件名称${param.eventname}`, param)
@@ -316,20 +295,28 @@ export default {
         case 'linkclick':
           // 浏览态
           this.status = '2'
-          this.loadingVersionModule(param.value.templateId, param.value.templateVersionId, param.value.assetsCategoryId, () => {
-            this.model.viewInfo.formShow = true
-            this.model.viewInfo.data = [param.value]
+          store.dispatch('model/setAppAttr', {
+            APPID: this.param.APPID,
+            key: 'viewInfo',
+            value: {
+              formShow: true
+            }
           })
           break
         // 点击列表编辑
         case 'edit':
+        case 'listOneEdit':
+        case 'listEdit':
         // eslint-disable-next-line no-fallthrough
         case 'celldblclick':
           // 修改态
           this.status = '3'
-          this.loadingVersionModule(param.value.templateId, param.value.templateVersionId, param.value.assetsCategoryId, () => {
-            this.model.formInfo.formShow = true
-            this.model.formInfo.data = [param.value]
+          store.dispatch('model/setAppAttr', {
+            APPID: this.param.APPID,
+            key: 'formInfo',
+            value: {
+              formShow: true
+            }
           })
           break
         case 'delete':
@@ -343,98 +330,16 @@ export default {
       }
     },
     /**
-     * 点击新增后打开选择不同的随手记模板
-     */
-    handlerClick () {
-      this.dialogNotesVisible = true
-    },
-    /**
      * 点击新增后的操作
      */
-    add (param, child) {
-      console.log(param, child)
-      this.dialogNotesVisible = false
-      this.loadingModule(child.id, () => {
-        this.model.formInfo.formShow = true
-      })
-    },
-    /**
-     * 根据templateid加载数据
-     */
-    loadingModule (templateId, callback) {
-      this.$http.post(`/base/templatecontent/selectMaxContentByDefineId?templateDefineId=${templateId}`)
-        .then((result) => {
-          if (result.data.code === 0) {
-            try {
-              this.model = { ...this.model, ...JSON.parse(result.data.sysTemplateContentDTO.template1), ...{ tableInfo: this.model.tableInfo, searchInfo: this.model.searchInfo } }
-              this.model.formInfo.data = [{ templateId, templateVersionId: result.data.sysTemplateContentDTO.id }]
-              this.model.viewInfo.data = [{}]
-              this.counteFields()
-              if (callback) {
-                callback()
-              }
-            } catch (error) {
-              console.log(error)
-            }
-          }
-        })
-    },
-    /**
-     * 根据templateVersionid（模板版本的id值）加载模板
-     */
-    loadingVersionModule (templateVersionId, callback) {
-      this.$http.get(`/base/templatecontent/${templateVersionId}`)
-        .then((result) => {
-          if (result.data.code === 0) {
-            try {
-              this.model = { ...this.model, ...JSON.parse(result.data.sysTemplateContentDTO.template1), ...{ tableInfo: this.model.tableInfo, searchInfo: this.model.searchInfo } }
-              this.model.formInfo.data = [{}]
-              this.model.viewInfo.data = [{}]
-              this.counteFields()
-              if (callback) {
-                callback()
-              }
-            } catch (error) {
-              console.log(error)
-            }
-          }
-        })
-    },
-    /**
-     * 字段配置页面关闭或打开
-     */
-    openFieldConfig () {
-      this.fieldConfigShow = !this.fieldConfigShow
-    },
-    /**
-     * 字段配置
-     */
-    counteFields () {
-      this.parentFields = []
-      this.childFields = []
-      const group = this.model.formInfo
-      Object.keys(group.fields).forEach((fieldCode) => {
-        const f = group.fields[fieldCode]
-        // 子表
-        if (f.tableName === 'OP_BUSINESS_NOTE_LINES') {
-          this.parentFields.push(fieldCode)
-          this.childFields.push({ key: f.fieldCode, label: f.fieldName })
+    listAdd (param) {
+      store.dispatch('model/setAppAttr', {
+        APPID: this.param.APPID,
+        key: 'formInfo',
+        value: {
+          formShow: true
         }
       })
-      group.children
-        .filter(cg => cg.fldGroupCode === 'appendInfo')
-        .forEach((cgroup) => {
-          cgroup.fldGroup[0].fields.forEach((field) => {
-            const cf = cgroup.fields[field.fieldCode]
-            // 子表
-            if (cf.tableName === 'OP_BUSINESS_NOTE_LINES') {
-              this.childFields.push({
-                key: field.fieldCode,
-                label: cf.fieldName
-              })
-            }
-          })
-        })
     },
     /**
      * 计算需要保存的内容
@@ -492,7 +397,6 @@ export default {
       Model.Listinfo(this.param.APPID, {}).then((result) => {
         if (result.CODE === '0') {
           try {
-            // this.model = { ...this.model, ...{ tableInfo: Model.toTable(result.MODEL) } }
             this.data = result.DATA
             this.data.map((d, index) => {
               d.rownum = index + 1
